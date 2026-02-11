@@ -55,6 +55,8 @@ jobs:
         fi
     
     - name: Commit and push results
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Action"
@@ -65,10 +67,27 @@ jobs:
         # Check if there are changes
         if git diff --cached --quiet; then
           echo "No changes to commit"
-        else
-          git commit -m "Auto: AMFI TER Analysis - $(date +'%Y-%m-%d %H:%M:%S')" || true
-          git push origin main --force-with-lease || echo "Git push skipped or failed (exit code: $?)"
+          exit 0
         fi
+        
+        # Commit changes
+        git commit -m "Auto: AMFI TER Analysis - $(date +'%Y-%m-%d %H:%M:%S')" || exit 0
+        
+        # Configure git to use token for authentication
+        git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
+        
+        # Push with retry logic
+        for attempt in 1 2 3; do
+          if git push origin main; then
+            echo "Push successful on attempt $attempt"
+            exit 0
+          fi
+          echo "Push failed on attempt $attempt, retrying..."
+          sleep 5
+        done
+        
+        echo "Warning: Could not push results after 3 attempts"
+        exit 0
       continue-on-error: true
     
     - name: Send Google Chat Notification
