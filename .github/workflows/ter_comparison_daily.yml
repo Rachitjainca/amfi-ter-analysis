@@ -1,9 +1,9 @@
 name: Daily TER Comparison Report
 
 on:
-  schedule:
-    # Run daily at 6:00 AM IST (00:30 UTC)
-    - cron: '30 0 * * *'
+  workflow_run:
+    workflows: ["AMFI TER Daily Analysis"]
+    types: [completed]
   workflow_dispatch:
 
 jobs:
