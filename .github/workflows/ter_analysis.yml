@@ -89,7 +89,7 @@ jobs:
           DATE=$(date '+%Y-%m-%d')
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
-          python3 << 'PYTHON_SCRIPT'
+          python3 << PYTHON_SCRIPT
 import json
 import urllib.request
 import os
