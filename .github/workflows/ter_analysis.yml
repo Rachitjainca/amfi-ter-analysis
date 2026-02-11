@@ -102,46 +102,41 @@ jobs:
         DATE=$(date '+%Y-%m-%d')
         RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         
-        python3 - << 'EOF'
-import json
-import urllib.request
-import os
-import sys
+        cat > notify.py <<EOF
+    import json
+    import urllib.request
+    import os
+    import sys
 
-try:
-    status = "$STATUS"
-    date = "$DATE"
-    run_url = "$RUN_URL"
-    webhook_url = os.environ.get("WEBHOOK_URL", "")
-    
-    # Read the formatted table message
-    message = ""
-    if os.path.exists("notification_message.txt"):
+    try:
+      status = "$STATUS"
+      date = "$DATE"
+      run_url = "$RUN_URL"
+      webhook_url = os.environ.get("WEBHOOK_URL", "")
+      message = ""
+      if os.path.exists("notification_message.txt"):
         with open("notification_message.txt", "r") as f:
-            message = f.read()
-    
-    # Build final message
-    final_message = f"AMFI TER Daily Analysis - {date}\n\n{message}\n\nStatus: {status}\nView: {run_url}"
-    
-    # Send to Google Chat
-    if webhook_url:
+          message = f.read()
+      final_message = f"AMFI TER Daily Analysis - {date}\n\n{message}\n\nStatus: {status}\nView: {run_url}"
+      if webhook_url:
         payload = {"text": final_message}
         req = urllib.request.Request(
-            webhook_url,
-            data=json.dumps(payload).encode('utf-8'),
-            headers={'Content-Type': 'application/json'}
+          webhook_url,
+          data=json.dumps(payload).encode('utf-8'),
+          headers={'Content-Type': 'application/json'}
         )
         try:
-            with urllib.request.urlopen(req) as response:
-                print(f"Notification sent. Status: {response.status}")
+          with urllib.request.urlopen(req) as response:
+            print(f"Notification sent. Status: {response.status}")
         except Exception as e:
-            print(f"Error sending notification: {e}")
-    else:
+          print(f"Error sending notification: {e}")
+      else:
         print("Webhook URL not configured")
-except Exception as e:
-    print(f"Error: {e}")
-    sys.exit(0)
-EOF
+    except Exception as e:
+      print(f"Error: {e}")
+      sys.exit(0)
+    EOF
+        python3 notify.py
       env:
         WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
       continue-on-error: true
