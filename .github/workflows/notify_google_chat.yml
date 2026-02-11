@@ -1,0 +1,158 @@
+name: Google Chat Notifications
+
+on:
+  workflow_run:
+    workflows: ["AMFI TER Daily Analysis"]
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Download artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ter_analysis.yml
+          name: ter-analysis-results
+          path: ./artifacts
+        continue-on-error: true
+
+      - name: Read analysis results
+        id: read_results
+        run: |
+          # Try to read summary from artifacts first, then from main branch
+          SUMMARY_FILE="./artifacts/analysis_summary.json"
+          if [ ! -f "$SUMMARY_FILE" ]; then
+            SUMMARY_FILE="./analysis_summary.json"
+          fi
+          
+          MESSAGE_FILE="./artifacts/notification_message.txt"
+          if [ ! -f "$MESSAGE_FILE" ]; then
+            MESSAGE_FILE="./notification_message.txt"
+          fi
+          
+          if [ -f "$SUMMARY_FILE" ]; then
+            echo "SUMMARY=$(cat $SUMMARY_FILE | jq -r '.')" >> $GITHUB_OUTPUT
+          fi
+          
+          if [ -f "$MESSAGE_FILE" ]; then
+            MESSAGE=$(cat $MESSAGE_FILE | head -50)
+            echo "MESSAGE<<EOF" >> $GITHUB_OUTPUT
+            echo "$MESSAGE" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+
+      - name: Send Google Chat notification
+        env:
+          WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
+          WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          import json
+          import requests
+          import os
+          from datetime import datetime
+          
+          webhook_url = os.getenv('WEBHOOK_URL')
+          if not webhook_url:
+              print("❌ GOOGLE_CHAT_WEBHOOK_URL not configured")
+              exit(1)
+          
+          conclusion = os.getenv('WORKFLOW_CONCLUSION', 'unknown')
+          repo = os.getenv('REPO', '')
+          run_id = os.getenv('RUN_ID', '')
+          
+          # Determine status emoji and text
+          if conclusion == 'success':
+              status_emoji = '✅'
+              status_text = 'Success'
+              theme_color = '#34A853'  # Green
+          elif conclusion == 'failure':
+              status_emoji = '❌'
+              status_text = 'Failed'
+              theme_color = '#EA4335'  # Red
+          else:
+              status_emoji = '⚠️'
+              status_text = conclusion.capitalize()
+              theme_color = '#FBBC04'  # Yellow
+          
+          # Build the message
+          message = {
+              "cards": [{
+                  "header": {
+                      "title": "AMFI TER Daily Analysis",
+                      "subtitle": f"Analysis Report - {datetime.now().strftime('%Y-%m-%d %H:%M:%S IST')}"
+                  },
+                  "sections": [
+                      {
+                          "widgets": [
+                              {
+                                  "keyValue": {
+                                      "topLabel": "Status",
+                                      "content": f"{status_emoji} {status_text}",
+                                      "contentMultiline": False
+                                  }
+                              }
+                          ]
+                      },
+                      {
+                          "widgets": [
+                              {
+                                  "keyValue": {
+                                      "topLabel": "Repository",
+                                      "content": repo,
+                                      "contentMultiline": False
+                              }
+                              },
+                              {
+                                  "keyValue": {
+                                      "topLabel": "Workflow Run",
+                                      "content": f"<a href='https://github.com/{repo}/actions/runs/{run_id}'>View Details</a>",
+                                      "contentMultiline": False
+                              }
+                              }
+                          ]
+                      },
+                      {
+                          "widgets": [
+                              {
+                                  "textParagraph": {
+                                      "text": "<b>📊 Analysis Summary</b><br>Click 'View Details' to see full results with TER change details and scheme comparisons."
+                                  }
+                              }
+                          ]
+                      }
+                  ]
+              }]
+          }
+          
+          try:
+              response = requests.post(webhook_url, json=message, timeout=10)
+              if response.status_code == 200:
+                  print(f"✅ Notification sent successfully to Google Chat")
+              else:
+                  print(f"❌ Failed to send notification: {response.status_code}")
+                  print(response.text)
+          except Exception as e:
+              print(f"❌ Error sending notification: {e}")
+        shell: python
+
+      - name: Handle missing webhook
+        if: failure()
+        run: |
+          echo "⚠️  Cannot send Google Chat notification"
+          echo "To enable notifications:"
+          echo "1. Create a Google Chat webhook: https://support.google.com/chat/answer/7655820"
+          echo "2. Add secret GOOGLE_CHAT_WEBHOOK_URL to GitHub repository"
+          echo "3. See GOOGLE_CHAT_SETUP.md for detailed instructions"
