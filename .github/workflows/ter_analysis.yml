@@ -31,6 +31,7 @@ jobs:
         mkdir -p downloads output history logs
     
     - name: Download and analyze TER files
+      id: analysis
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: python ter_github_actions.py
@@ -42,6 +43,16 @@ jobs:
         echo ""
         echo "=== Output Files ==="
         ls -lh output/ 2>/dev/null || echo "No output files"
+    
+    - name: Read analysis summary
+      id: summary
+      run: |
+        if [ -f analysis_summary.json ]; then
+          cat analysis_summary.json
+          echo "SUMMARY=$(cat analysis_summary.json | tr '\n' ' ')" >> $GITHUB_ENV
+        else
+          echo "SUMMARY=No summary available" >> $GITHUB_ENV
+        fi
     
     - name: Commit and push results
       run: |
@@ -59,3 +70,45 @@ jobs:
           git push origin main
         fi
       continue-on-error: true
+    
+    - name: Notify Google Chat - Success
+      if: success()
+      uses: google-github-actions/send-google-chat-webhook@v0
+      with:
+        webhook-url: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
+        message: |
+          ✅ **AMFI TER Analysis - Daily Update**
+          
+          **Status:** Success
+          **Date:** ${{ steps.summary.outputs.date || 'N/A' }}
+          **Repository:** ${{ github.repository }}
+          **Run:** <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View in GitHub>
+          
+          **Analysis Results:**
+          • **Regular Plan Changes:** Analyzed and reported
+          • **Direct Plan Changes:** Analyzed and reported
+          • **Comparison:** Regular vs Direct plan changes tracked
+          
+          **Files Generated:**
+          • Regular_Plan_TER_Changes_*.csv
+          • Direct_Plan_TER_Changes_*.csv
+          • Regular_vs_Direct_TER_Changes_*.csv
+          
+          All results have been committed to the repository.
+    
+    - name: Notify Google Chat - Failure
+      if: failure()
+      uses: google-github-actions/send-google-chat-webhook@v0
+      with:
+        webhook-url: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
+        message: |
+          ❌ **AMFI TER Analysis - Daily Update**
+          
+          **Status:** Failed
+          **Date:** $(date +'%Y-%m-%d')
+          **Repository:** ${{ github.repository }}
+          **Run:** <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View in GitHub>
+          
+          **Error:** The analysis workflow failed. Please check the logs for details.
+          
+          **Action Required:** Review the GitHub Actions logs to identify the issue.

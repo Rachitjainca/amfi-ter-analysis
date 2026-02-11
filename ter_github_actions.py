@@ -271,9 +271,46 @@ def analyze_daily():
     logger.info("Analysis completed successfully")
     logger.info("=" * 60)
 
+def generate_notification_data():
+    """
+    Generate summary data for Google Chat notification
+    """
+    summary = {
+        'regular_count': 0,
+        'direct_count': 0,
+        'comparison_count': 0,
+        'date': str(datetime.now().date())
+    }
+    
+    # Count records in output files
+    output_dir = Path('output')
+    if output_dir.exists():
+        for csv_file in output_dir.glob('*.csv'):
+            try:
+                df = pd.read_csv(csv_file)
+                if 'Regular_Plan' in csv_file.name:
+                    summary['regular_count'] = len(df)
+                elif 'Direct_Plan' in csv_file.name:
+                    summary['direct_count'] = len(df)
+                elif 'Regular_vs_Direct' in csv_file.name:
+                    summary['comparison_count'] = len(df)
+            except Exception as e:
+                logger.warning(f"Could not read {csv_file.name}: {e}")
+    
+    # Write summary to file for GitHub Actions to capture
+    try:
+        with open('analysis_summary.json', 'w') as f:
+            json.dump(summary, f, indent=2)
+        logger.info(f"Summary: Regular={summary['regular_count']}, Direct={summary['direct_count']}, Comparison={summary['comparison_count']}")
+    except Exception as e:
+        logger.error(f"Error writing summary: {e}")
+    
+    return summary
+
 if __name__ == '__main__':
     try:
         analyze_daily()
+        generate_notification_data()
     except Exception as e:
         logger.error(f"Fatal error: {e}", exc_info=True)
         exit(1)
