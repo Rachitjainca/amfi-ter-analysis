@@ -71,123 +71,36 @@ jobs:
         fi
       continue-on-error: true
     
-    - name: Notify Google Chat - Success
-      if: success()
+    - name: Send Google Chat Notification
+      if: always()
       run: |
-        if [ -f analysis_summary.json ]; then
-          # Read summary data
-          REGULAR_COUNT=$(jq '.regular_count' analysis_summary.json)
-          DIRECT_COUNT=$(jq '.direct_count' analysis_summary.json)
-          COMPARISON_COUNT=$(jq '.comparison_count' analysis_summary.json)
-          
-          # Build top changes text for regular plan
-          REGULAR_TEXT=$(jq -r '.regular_changes[] | "• \(.scheme): \(.old_ter)% → \(.new_ter)% (Reduction: \(.reduction)%)"' analysis_summary.json | head -5)
-          
-          # Build top changes text for direct plan
-          DIRECT_TEXT=$(jq -r '.direct_changes[] | "• \(.scheme): \(.old_ter)% → \(.new_ter)% (Reduction: \(.reduction)%)"' analysis_summary.json | head -5)
-          
-          # Build comparison text
-          COMPARISON_TEXT=$(jq -r '.comparison_data[] | "• \(.scheme): Regular \(.regular_reduction)% vs Direct \(.direct_reduction)% (Diff: \(.difference)%)"' analysis_summary.json | head -5)
-          
-          curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
-            -H 'Content-Type: application/json' \
-            -d @- <<'EOF'
-          {
-            "text": "✅ AMFI TER Daily Analysis - $(date +'%Y-%m-%d')",
-            "cards": [{
-              "header": {
-                "title": "✅ AMFI TER Analysis Daily Update",
-                "subtitle": "$(date +'%Y-%m-%d %H:%M:%S IST')"
-              },
-              "sections": [
-                {
-                  "header": "📊 Analysis Summary",
-                  "widgets": [
-                    {"textParagraph": {"text": "<b>Repository:</b> ${{ github.repository }}"}},
-                    {"textParagraph": {"text": "<b>Status:</b> ✅ Success"}},
-                    {"textParagraph": {"text": "<b>Run Link:</b> <a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">View GitHub Action</a>"}}
-                  ]
-                },
-                {
-                  "header": "📈 Regular Plan Changes",
-                  "widgets": [
-                    {"textParagraph": {"text": "<b>Total Changes:</b> ${REGULAR_COUNT}"}},
-                    {"textParagraph": {"text": "<b>Top 5 Changes:</b>"}},
-                    {"textParagraph": {"text": "${REGULAR_TEXT:-No changes}"}}
-                  ]
-                },
-                {
-                  "header": "📉 Direct Plan Changes", 
-                  "widgets": [
-                    {"textParagraph": {"text": "<b>Total Changes:</b> ${DIRECT_COUNT}"}},
-                    {"textParagraph": {"text": "<b>Top 5 Changes:</b>"}},
-                    {"textParagraph": {"text": "${DIRECT_TEXT:-No changes}"}}
-                  ]
-                },
-                {
-                  "header": "⚖️ Regular vs Direct Comparison",
-                  "widgets": [
-                    {"textParagraph": {"text": "<b>Common Schemes:</b> ${COMPARISON_COUNT}"}},
-                    {"textParagraph": {"text": "<b>Top Differences:</b>"}},
-                    {"textParagraph": {"text": "${COMPARISON_TEXT:-No data}"}}
-                  ]
-                },
-                {
-                  "widgets": [
-                    {"textParagraph": {"text": "<b>Files Generated:</b>"}}
-                  ]
-                },
-                {
-                  "widgets": [
-                    {"textParagraph": {"text": "✓ Regular_Plan_TER_Changes_$(date +'%Y-%m-%d').csv"}},
-                    {"textParagraph": {"text": "✓ Direct_Plan_TER_Changes_$(date +'%Y-%m-%d').csv"}},
-                    {"textParagraph": {"text": "✓ Regular_vs_Direct_TER_Changes_$(date +'%Y-%m-%d').csv"}}
-                  ]
-                }
-              ]
-            }]
-          }
-        EOF
-        else
-          echo "Summary file not found, sending basic notification"
-          curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
-            -H 'Content-Type: application/json' \
-            -d '{
-              "text": "✅ AMFI TER Analysis completed successfully on $(date +'"'"'%Y-%m-%d'"'"')",
-              "cards": [{
-                "header": {"title": "✅ AMFI TER Analysis - Success"},
-                "sections": [{
-                  "widgets": [
-                    {"textParagraph": {"text": "Analysis completed and results committed to repository."}}
-                  ]
-                }]
-              }]
-            }'
+        if [ -z "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" ]; then
+          echo "Google Chat webhook URL not configured, skipping notification"
+          exit 0
         fi
-      continue-on-error: true
-    
-    - name: Notify Google Chat - Failure
-      if: failure()
-      run: |
+        
+        STATUS="${{ job.status }}"
+        DATE=$(date '+%Y-%m-%d')
+        
+        if [ -f analysis_summary.json ]; then
+          REGULAR=$(jq -r '.regular_count' analysis_summary.json)
+          DIRECT=$(jq -r '.direct_count' analysis_summary.json)
+          COMPARISON=$(jq -r '.comparison_count' analysis_summary.json)
+        else
+          REGULAR="N/A"
+          DIRECT="N/A"
+          COMPARISON="N/A"
+        fi
+        
+        MESSAGE="📊 AMFI TER Analysis Daily Update\n"
+        MESSAGE="${MESSAGE}Date: ${DATE}\n"
+        MESSAGE="${MESSAGE}Status: ${STATUS}\n"
+        MESSAGE="${MESSAGE}Regular Plan Changes: ${REGULAR}\n"
+        MESSAGE="${MESSAGE}Direct Plan Changes: ${DIRECT}\n"
+        MESSAGE="${MESSAGE}Comparison Schemes: ${COMPARISON}\n"
+        MESSAGE="${MESSAGE}View: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        
         curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
           -H 'Content-Type: application/json' \
-          -d '{
-            "text": "❌ AMFI TER Analysis - Failed",
-            "cards": [{
-              "header": {
-                "title": "❌ AMFI TER Analysis Failed",
-                "subtitle": "'"$(date +'%Y-%m-%d %H:%M:%S IST')"'"
-              },
-              "sections": [{
-                "header": "⚠️ Error Details",
-                "widgets": [
-                  {"textParagraph": {"text": "<b>Status:</b> ❌ Failed"}},
-                  {"textParagraph": {"text": "<b>Date:</b> '"$(date +'%Y-%m-%d')"'"}},
-                  {"textParagraph": {"text": "<b>Repository:</b> ${{ github.repository }}"}},
-                  {"textParagraph": {"text": "<b>Workflow Run:</b> <a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">View Error Logs in GitHub</a>"}},
-                  {"textParagraph": {"text": "<b>Action Required:</b> Review the GitHub Actions logs to identify and fix the issue."}}
-                ]
-              }]
-            }]
-          }' || echo "Google Chat notification may have failed"
+          -d "{\"text\": \"$(echo -e "$MESSAGE" | sed 's/"/\\"/g')\"}"
       continue-on-error: true
