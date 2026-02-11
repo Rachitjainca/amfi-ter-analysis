@@ -273,31 +273,82 @@ def analyze_daily():
 
 def generate_notification_data():
     """
-    Generate summary data for Google Chat notification
+    Generate detailed notification data with actual data from CSV files
     """
     summary = {
+        'date': str(datetime.now().date()),
         'regular_count': 0,
         'direct_count': 0,
         'comparison_count': 0,
-        'date': str(datetime.now().date())
+        'regular_changes': [],
+        'direct_changes': [],
+        'comparison_data': []
     }
     
-    # Count records in output files
     output_dir = Path('output')
     if output_dir.exists():
-        for csv_file in output_dir.glob('*.csv'):
+        # Read Regular Plan changes
+        regular_file = list(output_dir.glob('Regular_Plan_TER_Changes_*.csv'))
+        if regular_file:
             try:
-                df = pd.read_csv(csv_file)
-                if 'Regular_Plan' in csv_file.name:
-                    summary['regular_count'] = len(df)
-                elif 'Direct_Plan' in csv_file.name:
-                    summary['direct_count'] = len(df)
-                elif 'Regular_vs_Direct' in csv_file.name:
-                    summary['comparison_count'] = len(df)
+                df = pd.read_csv(regular_file[0])
+                summary['regular_count'] = len(df)
+                # Get top 5 changes
+                top_changes = df.nlargest(5, 'TER Reduction (%)')
+                for idx, row in top_changes.iterrows():
+                    summary['regular_changes'].append({
+                        'scheme': row['Scheme Name'],
+                        'old_ter': float(row['Old TER (%)']),
+                        'new_ter': float(row['New TER (%)']),
+                        'reduction': float(row['TER Reduction (%)'])
+                    })
+                logger.info(f"Regular Plan: {summary['regular_count']} changes")
             except Exception as e:
-                logger.warning(f"Could not read {csv_file.name}: {e}")
+                logger.warning(f"Could not read Regular Plan file: {e}")
+        
+        # Read Direct Plan changes
+        direct_file = list(output_dir.glob('Direct_Plan_TER_Changes_*.csv'))
+        if direct_file:
+            try:
+                df = pd.read_csv(direct_file[0])
+                summary['direct_count'] = len(df)
+                # Get top 5 changes
+                top_changes = df.nlargest(5, 'TER Reduction (%)')
+                for idx, row in top_changes.iterrows():
+                    summary['direct_changes'].append({
+                        'scheme': row['Scheme Name'],
+                        'old_ter': float(row['Old TER (%)']),
+                        'new_ter': float(row['New TER (%)']),
+                        'reduction': float(row['TER Reduction (%)'])
+                    })
+                logger.info(f"Direct Plan: {summary['direct_count']} changes")
+            except Exception as e:
+                logger.warning(f"Could not read Direct Plan file: {e}")
+        
+        # Read Comparison data
+        comparison_file = list(output_dir.glob('*Regular_vs_Direct*.csv'))
+        if comparison_file:
+            try:
+                df = pd.read_csv(comparison_file[0])
+                summary['comparison_count'] = len(df)
+                # Get top positive and negative differences
+                top_differences = pd.concat([
+                    df.nlargest(3, 'Difference (%)'),
+                    df.nsmallest(3, 'Difference (%)')
+                ]).drop_duplicates()
+                
+                for idx, row in top_differences.iterrows():
+                    summary['comparison_data'].append({
+                        'scheme': row['Scheme Name'],
+                        'regular_reduction': float(row['TER Reduction (%)_Regular']),
+                        'direct_reduction': float(row['TER Reduction (%)_Direct']),
+                        'difference': float(row['Difference (%)'])
+                    })
+                logger.info(f"Comparison: {summary['comparison_count']} schemes")
+            except Exception as e:
+                logger.warning(f"Could not read Comparison file: {e}")
     
-    # Write summary to file for GitHub Actions to capture
+    # Write summary to JSON for GitHub Actions
     try:
         with open('analysis_summary.json', 'w') as f:
             json.dump(summary, f, indent=2)
