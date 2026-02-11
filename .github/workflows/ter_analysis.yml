@@ -66,15 +66,15 @@ jobs:
         if git diff --cached --quiet; then
           echo "No changes to commit"
         else
-          git commit -m "Auto: AMFI TER Analysis - $(date +'%Y-%m-%d %H:%M:%S')"
-          git push origin main
+          git commit -m "Auto: AMFI TER Analysis - $(date +'%Y-%m-%d %H:%M:%S')" || true
+          git push origin main --force-with-lease || echo "Git push skipped or failed (exit code: $?)"
         fi
       continue-on-error: true
     
     - name: Send Google Chat Notification
       if: always()
       run: |
-        if [ -z "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" ]; then
+        if [ -z "$WEBHOOK_URL" ]; then
           echo "Google Chat webhook URL not configured, skipping notification"
           exit 0
         fi
@@ -83,49 +83,46 @@ jobs:
         DATE=$(date '+%Y-%m-%d')
         RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         
-        # Read formatted message
-        MESSAGE=""
-        if [ -f notification_message.txt ]; then
-          MESSAGE=$(cat notification_message.txt)
-        fi
-        
-        # Create JSON payload and send
-        python3 << 'PYTHON_SCRIPT'
-        import json
-        import subprocess
-        import os
-        
-        message = ""
-        status = "$STATUS"
-        date = "$DATE"
-        run_url = "$RUN_URL"
-        
-        # Read the formatted table message
-        if os.path.exists("notification_message.txt"):
-            with open("notification_message.txt", "r") as f:
-                message = f.read()
-        
-        # Build final message
-        final_message = f"📊 AMFI TER Daily Analysis - {date}\n\n"
-        final_message += message
-        final_message += f"\n\nStatus: {status}\nView: {run_url}"
-        
-        # Send to Google Chat
-        webhook_url = os.environ.get("GOOGLE_CHAT_WEBHOOK_URL", "")
-        if webhook_url:
-            payload = {"text": final_message}
-            import urllib.request
-            req = urllib.request.Request(
-                webhook_url,
-                data=json.dumps(payload).encode('utf-8'),
-                headers={'Content-Type': 'application/json'}
-            )
-            try:
-                with urllib.request.urlopen(req) as response:
-                    print(f"Notification sent. Status: {response.status}")
-            except Exception as e:
-                print(f"Error sending notification: {e}")
-        PYTHON_SCRIPT
+        python3 - << 'EOF'
+import json
+import urllib.request
+import os
+import sys
+
+try:
+    status = "$STATUS"
+    date = "$DATE"
+    run_url = "$RUN_URL"
+    webhook_url = os.environ.get("WEBHOOK_URL", "")
+    
+    # Read the formatted table message
+    message = ""
+    if os.path.exists("notification_message.txt"):
+        with open("notification_message.txt", "r") as f:
+            message = f.read()
+    
+    # Build final message
+    final_message = f"AMFI TER Daily Analysis - {date}\n\n{message}\n\nStatus: {status}\nView: {run_url}"
+    
+    # Send to Google Chat
+    if webhook_url:
+        payload = {"text": final_message}
+        req = urllib.request.Request(
+            webhook_url,
+            data=json.dumps(payload).encode('utf-8'),
+            headers={'Content-Type': 'application/json'}
+        )
+        try:
+            with urllib.request.urlopen(req) as response:
+                print(f"Notification sent. Status: {response.status}")
+        except Exception as e:
+            print(f"Error sending notification: {e}")
+    else:
+        print("Webhook URL not configured")
+except Exception as e:
+    print(f"Error: {e}")
+    sys.exit(0)
+EOF
       env:
-        GOOGLE_CHAT_WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
+        WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
       continue-on-error: true
