@@ -1,0 +1,181 @@
+name: Daily TER Comparison Report
+
+on:
+  schedule:
+    # Run daily at 6:00 AM IST (00:30 UTC)
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  compare_ter:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install pandas
+
+      - name: Generate TER Comparison Report
+        run: |
+          python generate_ter_comparison.py
+
+      - name: Format Report for Google Chat
+        id: format_report
+        run: |
+          python << 'PYTHON_SCRIPT'
+          import pandas as pd
+          import json
+          
+          # Read the comparison file
+          df = pd.read_csv('./output/TER_Comparison_Comprehensive.csv')
+          
+          # Get top 20 schemes with highest differences
+          top_schemes = df.head(20)
+          
+          # Create message text
+          message_text = f"""
+          📊 **Daily TER Comparison Report**
+          Date: {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S IST')}
+          
+          Total Schemes Analyzed: {len(df)}
+          
+          **Top 20 Schemes by Difference (Regular Change - Direct Change)**
+          
+          (Scheme Name | Date | Reg Old → New | Dir Old → New | Difference)
+          """
+          
+          for idx, row in top_schemes.iterrows():
+              scheme = row['Scheme Name'][:50]  # Truncate for readability
+              date = row['Date of TER Change']
+              reg_old = row['Regular Base TER Old']
+              reg_new = row['Regular Base TER New']
+              dir_old = row['Direct Base TER Old']
+              dir_new = row['Direct Base TER New']
+              diff = row['Difference (Reg Change - Dir Change)']
+              
+              message_text += f"\n{idx+1:2d}. {scheme:<50} | {date} | {reg_old:.2f}→{reg_new:.2f} | {dir_old:.2f}→{dir_new:.2f} | {diff:+.4f}"
+          
+          message_text += f"\n\nFull report available: {df.shape[0]} schemes total"
+          message_text += f"\nDownload: Output CSV file"
+          
+          # Write to file for later use
+          with open('/tmp/ter_report.txt', 'w') as f:
+              f.write(message_text)
+          
+          # Set output for next step
+          with open('$GITHUB_OUTPUT', 'a') as f:
+              f.write(f"MESSAGE<<EOF\n{message_text}\nEOF\n")
+          
+          PYTHON_SCRIPT
+
+      - name: Send to Google Chat Webhook
+        env:
+          WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
+        run: |
+          python << 'PYTHON_SCRIPT'
+          import json
+          import requests
+          import os
+          from datetime import datetime
+          
+          webhook_url = os.getenv('WEBHOOK_URL')
+          if not webhook_url:
+              print("❌ GOOGLE_CHAT_WEBHOOK_URL not configured")
+              exit(1)
+          
+          # Read the comparison data
+          import pandas as pd
+          df = pd.read_csv('./output/TER_Comparison_Comprehensive.csv')
+          top_20 = df.head(20)
+          
+          # Create a nicely formatted Google Chat message
+          message = {
+              "cards": [{
+                  "header": {
+                      "title": "📊 Daily TER Comparison Report",
+                      "subtitle": f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S IST')}"
+                  },
+                  "sections": [
+                      {
+                          "widgets": [
+                              {
+                                  "keyValue": {
+                                      "topLabel": "Total Schemes Analyzed",
+                                      "content": str(len(df)),
+                                      "contentMultiline": False
+                                  }
+                              },
+                              {
+                                  "keyValue": {
+                                      "topLabel": "Report Type",
+                                      "content": "Regular vs Direct Plan TER Changes",
+                                      "contentMultiline": False
+                                  }
+                              }
+                          ]
+                      },
+                      {
+                          "header": {
+                              "title": "🔝 Top 20 Schemes (Highest Difference)"
+                          },
+                          "widgets": [
+                              {
+                                  "textParagraph": {
+                                      "text": "<b>Sorted by:</b> (Regular Change - Direct Change)<br><br>" + 
+                                      "<table><tr><th>Rank</th><th>Scheme Name</th><th>Reg Old</th><th>Reg New</th><th>Dir Old</th><th>Dir New</th><th>Difference</th></tr>" +
+                                      "".join([
+                                          f"<tr><td>{idx+1}</td><td>{row['Scheme Name'][:40]}</td>" +
+                                          f"<td>{row['Regular Base TER Old']:.2f}</td><td>{row['Regular Base TER New']:.2f}</td>" +
+                                          f"<td>{row['Direct Base TER Old']:.2f}</td><td>{row['Direct Base TER New']:.2f}</td>" +
+                                          f"<td><b>{row['Difference (Reg Change - Dir Change)']:+.4f}</b></td></tr>"
+                                          for idx, (_, row) in enumerate(top_20.iterrows())
+                                      ]) +
+                                      "</table>"
+                                  }
+                              }
+                          ]
+                      },
+                      {
+                          "widgets": [
+                              {
+                                  "textParagraph": {
+                                      "text": f"<b>Statistics:</b><br>" +
+                                      f"Schemes where Reg Change > Dir Change: {len(df[df['Difference (Reg Change - Dir Change)'] > 0])}<br>" +
+                                      f"Schemes where Reg Change < Dir Change: {len(df[df['Difference (Reg Change - Dir Change)'] < 0])}<br>" +
+                                      f"Schemes with equal changes: {len(df[df['Difference (Reg Change - Dir Change)'] == 0])}<br>" +
+                                      f"Average Difference: {df['Difference (Reg Change - Dir Change)'].mean():.4f}"
+                                  }
+                              }
+                          ]
+                      }
+                  ]
+              }]
+          }
+          
+          try:
+              response = requests.post(webhook_url, json=message, timeout=10)
+              if response.status_code == 200:
+                  print(f"✅ Daily TER comparison report sent successfully to Google Chat")
+              else:
+                  print(f"❌ Failed to send report: {response.status_code}")
+                  print(response.text)
+          except Exception as e:
+              print(f"❌ Error sending report: {e}")
+          
+          PYTHON_SCRIPT
+
+      - name: Commit and Push Results
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add output/TER_Comparison_Comprehensive.csv
+          git commit -m "Daily TER Comparison Report - $(date -u +'%Y-%m-%d')" || echo "No changes to commit"
+          git push || echo "Nothing to push"
+        continue-on-error: true
