@@ -1,9 +1,20 @@
 import pandas as pd
 import os
+import sys
 
-# Read both CSV files
-direct_df = pd.read_csv('./output/Direct_Plan_TER_Changes.csv')
-regular_df = pd.read_csv('./output/Regular_Plan_TER_Changes.csv')
+# Check if output directory exists
+if not os.path.exists('./output'):
+    print("❌ Output directory not found. Running TER analysis first...")
+    sys.exit(1)
+
+# Read both CSV files with error handling
+try:
+    direct_df = pd.read_csv('./output/Direct_Plan_TER_Changes.csv')
+    regular_df = pd.read_csv('./output/Regular_Plan_TER_Changes.csv')
+except FileNotFoundError as e:
+    print(f"❌ Error: Required CSV files not found: {e}")
+    print("Please ensure TER analysis workflow has completed successfully.")
+    sys.exit(1)
 
 # Rename columns for clarity
 direct_df = direct_df.rename(columns={

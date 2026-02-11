@@ -13,6 +13,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
 
+      - name: Download TER analysis artifacts
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: ter_analysis.yml
+          path: ./
+          skip_unpack: false
+        continue-on-error: true
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
