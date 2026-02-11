@@ -73,42 +73,57 @@ jobs:
     
     - name: Notify Google Chat - Success
       if: success()
-      uses: google-github-actions/send-google-chat-webhook@v1
-      with:
-        webhook-url: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
-        message: |
-          ✅ **AMFI TER Analysis - Daily Update**
-          
-          **Status:** Success
-          **Date:** ${{ steps.summary.outputs.date || 'N/A' }}
-          **Repository:** ${{ github.repository }}
-          **Run:** <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View in GitHub>
-          
-          **Analysis Results:**
-          • **Regular Plan Changes:** Analyzed and reported
-          • **Direct Plan Changes:** Analyzed and reported
-          • **Comparison:** Regular vs Direct plan changes tracked
-          
-          **Files Generated:**
-          • Regular_Plan_TER_Changes_*.csv
-          • Direct_Plan_TER_Changes_*.csv
-          • Regular_vs_Direct_TER_Changes_*.csv
-          
-          All results have been committed to the repository.
+      run: |
+        curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "text": "✅ AMFI TER Analysis - Daily Update",
+            "cards": [{
+              "header": {
+                "title": "✅ AMFI TER Analysis - Daily Update",
+                "subtitle": "Status: Success"
+              },
+              "sections": [{
+                "widgets": [
+                  {"textParagraph": {"text": "<b>Date:</b> '"$(date +'%Y-%m-%d')"'"}},
+                  {"textParagraph": {"text": "<b>Repository:</b> ${{ github.repository }}"}},
+                  {"textParagraph": {"text": "<b>Workflow Run:</b> <a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">View in GitHub</a>"}},
+                  {"textParagraph": {"text": "<b>Analysis Results:</b>"}},
+                  {"textParagraph": {"text": "• Regular Plan Changes: Analyzed and reported"}},
+                  {"textParagraph": {"text": "• Direct Plan Changes: Analyzed and reported"}},
+                  {"textParagraph": {"text": "• Comparison: Regular vs Direct plan changes tracked"}},
+                  {"textParagraph": {"text": "<b>Files Generated:</b>"}},
+                  {"textParagraph": {"text": "• Regular_Plan_TER_Changes_*.csv"}},
+                  {"textParagraph": {"text": "• Direct_Plan_TER_Changes_*.csv"}},
+                  {"textParagraph": {"text": "• Regular_vs_Direct_TER_Changes_*.csv"}},
+                  {"textParagraph": {"text": "All results have been committed to the repository."}}
+                ]
+              }]
+            }]
+          }' || echo "Google Chat notification may have failed, but analysis completed"
+      continue-on-error: true
     
     - name: Notify Google Chat - Failure
       if: failure()
-      uses: google-github-actions/send-google-chat-webhook@v1
-      with:
-        webhook-url: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
-        message: |
-          ❌ **AMFI TER Analysis - Daily Update**
-          
-          **Status:** Failed
-          **Date:** $(date +'%Y-%m-%d')
-          **Repository:** ${{ github.repository }}
-          **Run:** <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View in GitHub>
-          
-          **Error:** The analysis workflow failed. Please check the logs for details.
-          
-          **Action Required:** Review the GitHub Actions logs to identify the issue.
+      run: |
+        curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
+          -H 'Content-Type: application/json' \
+          -d '{
+            "text": "❌ AMFI TER Analysis - Daily Update",
+            "cards": [{
+              "header": {
+                "title": "❌ AMFI TER Analysis - Daily Update",
+                "subtitle": "Status: Failed"
+              },
+              "sections": [{
+                "widgets": [
+                  {"textParagraph": {"text": "<b>Date:</b> '"$(date +'%Y-%m-%d')"'"}},
+                  {"textParagraph": {"text": "<b>Repository:</b> ${{ github.repository }}"}},
+                  {"textParagraph": {"text": "<b>Workflow Run:</b> <a href=\"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\">View in GitHub</a>"}},
+                  {"textParagraph": {"text": "<b>Error:</b> The analysis workflow failed. Please check the logs for details."}},
+                  {"textParagraph": {"text": "<b>Action Required:</b> Review the GitHub Actions logs to identify the issue."}}
+                ]
+              }]
+            }]
+          }' || echo "Google Chat notification may have failed"
+      continue-on-error: true
