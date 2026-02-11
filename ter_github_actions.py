@@ -33,15 +33,31 @@ STATE_FILE = 'ter_state.json'
 API_URL = 'https://www.amfiindia.com/api/populate-te-rdata-revised'
 
 def load_state():
-    """Load state from JSON file"""
+    """Load state from JSON file and validate/migrate schema"""
+    default_state = get_default_state()
+    
     if os.path.exists(STATE_FILE):
         try:
             with open(STATE_FILE, 'r') as f:
-                return json.load(f)
+                loaded_state = json.load(f)
+            
+            # Validate and migrate state structure
+            # Ensure all required keys exist
+            for key in default_state.keys():
+                if key not in loaded_state:
+                    logger.info(f"Missing key '{key}' in state, using default value")
+                    loaded_state[key] = default_state[key]
+            
+            # Handle old format migration (last_month/last_year -> month_year)
+            if 'month_year' not in loaded_state and 'last_year' in loaded_state and 'last_month' in loaded_state:
+                loaded_state['month_year'] = f"{loaded_state['last_year']}-{loaded_state['last_month']:02d}"
+                logger.info(f"Migrated old state format to new format: month_year={loaded_state['month_year']}")
+            
+            return loaded_state
         except Exception as e:
             logger.error(f"Error loading state: {e}")
-            return get_default_state()
-    return get_default_state()
+            return default_state
+    return default_state
 
 def get_default_state():
     """Get default state structure"""
