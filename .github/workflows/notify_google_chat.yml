@@ -41,14 +41,15 @@ jobs:
           fi
           
           if [ -f "$SUMMARY_FILE" ]; then
-            echo "SUMMARY=$(cat $SUMMARY_FILE | jq -r '.')" >> $GITHUB_OUTPUT
+            echo "SUMMARY<<SUMMARY_EOF" >> $GITHUB_OUTPUT
+            cat $SUMMARY_FILE >> $GITHUB_OUTPUT
+            echo "SUMMARY_EOF" >> $GITHUB_OUTPUT
           fi
           
           if [ -f "$MESSAGE_FILE" ]; then
-            MESSAGE=$(cat $MESSAGE_FILE | head -50)
-            echo "MESSAGE<<EOF" >> $GITHUB_OUTPUT
-            echo "$MESSAGE" >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+            echo "MESSAGE<<MESSAGE_EOF" >> $GITHUB_OUTPUT
+            cat $MESSAGE_FILE | head -50 >> $GITHUB_OUTPUT
+            echo "MESSAGE_EOF" >> $GITHUB_OUTPUT
           fi
         continue-on-error: true
 
