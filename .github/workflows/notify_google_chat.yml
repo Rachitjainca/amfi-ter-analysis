@@ -160,6 +160,3 @@ jobs:
           echo "1. Create a Google Chat webhook: https://support.google.com/chat/answer/7655820"
           echo "2. Add secret GOOGLE_CHAT_WEBHOOK_URL to GitHub repository"
           echo "3. See GOOGLE_CHAT_SETUP.md for detailed instructions"
-
-  push:
-    branches: [main]
