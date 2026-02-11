@@ -107,17 +107,6 @@ def read_ter_file(filepath):
         logger.error(f"Error reading file {filepath}: {e}")
         return None
 
-def get_latest_file_for_month(year, month):
-    """Get the latest downloaded file for a specific month"""
-    downloads_dir = Path('downloads')
-    pattern = f"TER_{year}_{month:02d}_*.xlsx"
-    
-    files = list(downloads_dir.glob(pattern))
-    if files:
-        # Return the most recent file
-        return str(max(files, key=lambda p: p.stat().st_mtime))
-    return None
-
 def compare_schemes(old_df, new_df, plan_type):
     """Compare two dataframes and return changes"""
     try:
@@ -299,38 +288,26 @@ def analyze_daily():
     logger.info("Analysis completed successfully")
     logger.info("=" * 60)
 
-def format_table(df, max_rows=None):
-    """Format DataFrame as ASCII table string"""
-    if df.empty:
-        return "No data available"
-    
-    # Use all rows if max_rows is None, otherwise limit
-    if max_rows is not None:
-        display_df = df.head(max_rows).copy()
-    else:
-        display_df = df.copy()
-    
-    # Format numeric columns for better display
-    for col in display_df.columns:
-        if pd.api.types.is_numeric_dtype(display_df[col]):
-            display_df[col] = display_df[col].apply(lambda x: f"{x:.2f}")
-    
-    # Create formatted string
-    table_str = display_df.to_string(index=False)
-    return table_str
-
-def create_notification_message():
-    """Create detailed notification message with ALL formatted data combined and sorted by difference"""
+def generate_notification():
+    """Generate notification message and summary data in a single pass"""
     output_dir = Path('output')
+    summary = {
+        'date': str(datetime.now().date()),
+        'regular_count': 0,
+        'direct_count': 0,
+        'comparison_count': 0
+    }
     
-    # Read both Regular and Direct plan files
+    # Read data files
     regular_data = None
     direct_data = None
+    previous_schemes = set()
     
     regular_file = list(output_dir.glob('Regular_Plan_TER_Changes_*.csv')) if output_dir.exists() else []
     if regular_file:
         try:
             regular_data = pd.read_csv(regular_file[0])
+            summary['regular_count'] = len(regular_data)
         except Exception as e:
             logger.warning(f"Could not read Regular Plan file: {e}")
     
@@ -338,12 +315,11 @@ def create_notification_message():
     if direct_file:
         try:
             direct_data = pd.read_csv(direct_file[0])
+            summary['direct_count'] = len(direct_data)
         except Exception as e:
             logger.warning(f"Could not read Direct Plan file: {e}")
     
-    # Load previous baseline to identify NEW changes only
-    previous_baseline = None
-    previous_schemes = set()
+    # Load previous baseline to identify NEW changes
     try:
         if Path('baseline_ter_data.csv').exists():
             previous_baseline = pd.read_csv('baseline_ter_data.csv')
@@ -352,80 +328,70 @@ def create_notification_message():
     except Exception as e:
         logger.warning(f"Could not load previous baseline: {e}")
     
-    # Create combined view with both plans and identify NEW changes
+    # Build message
     message = ""
-    
     if regular_data is not None or direct_data is not None:
-        message += "=" * 150 + "\n"
+        message = "=" * 150 + "\n"
         message += "AMFI MUTUAL FUND - TER REDUCTIONS (REGULAR vs DIRECT PLAN) - SORTED BY HIGHEST DIFFERENCE\n"
         message += "=" * 150 + "\n\n"
         
-        # Create combined table
-        combined_data = []
-        
-        # Get scheme names not in both
+        # Build combined table efficiently
         regular_schemes = set(regular_data['Scheme Name'].unique()) if regular_data is not None else set()
         direct_schemes = set(direct_data['Scheme Name'].unique()) if direct_data is not None else set()
         all_schemes = sorted(regular_schemes.union(direct_schemes))
         
-        # Build combined rows
+        combined_rows = []
+        new_count = 0
+        
         for scheme in all_schemes:
             row = {'Scheme Name': scheme}
-            reg_reduction = None
-            dir_reduction = None
+            reg_reduction = 0.0
+            dir_reduction = 0.0
             
-            # Regular plan data
+            # Get Regular plan data
             if regular_data is not None:
-                reg_scheme = regular_data[regular_data['Scheme Name'] == scheme]
-                if not reg_scheme.empty:
-                    reg_reduction = float(reg_scheme['TER Reduction (%)'].iloc[0])
-                    row['Reg Old TER %'] = f"{float(reg_scheme['Old Regular Plan - Base TER (%)'].iloc[0]):.2f}"
-                    row['Reg New TER %'] = f"{float(reg_scheme['New Regular Plan - Base TER (%)'].iloc[0]):.2f}"
+                reg_data = regular_data[regular_data['Scheme Name'] == scheme]
+                if not reg_data.empty:
+                    reg_reduction = float(reg_data['TER Reduction (%)'].iloc[0])
+                    row['Reg Old TER %'] = f"{float(reg_data['Old Regular Plan - Base TER (%)'].iloc[0]):.2f}"
+                    row['Reg New TER %'] = f"{float(reg_data['New Regular Plan - Base TER (%)'].iloc[0]):.2f}"
                     row['Reg Reduction %'] = f"{reg_reduction:.2f}"
                 else:
-                    row['Reg Old TER %'] = 'N/A'
-                    row['Reg New TER %'] = 'N/A'
-                    row['Reg Reduction %'] = 'N/A'
+                    row['Reg Old TER %'] = row['Reg New TER %'] = row['Reg Reduction %'] = 'N/A'
+            else:
+                row['Reg Old TER %'] = row['Reg New TER %'] = row['Reg Reduction %'] = 'N/A'
             
-            # Direct plan data
+            # Get Direct plan data
             if direct_data is not None:
-                dir_scheme = direct_data[direct_data['Scheme Name'] == scheme]
-                if not dir_scheme.empty:
-                    dir_reduction = float(dir_scheme['TER Reduction (%)'].iloc[0])
-                    row['Dir Old TER %'] = f"{float(dir_scheme['Old Direct Plan - Base TER (%)'].iloc[0]):.2f}"
-                    row['Dir New TER %'] = f"{float(dir_scheme['New Direct Plan - Base TER (%)'].iloc[0]):.2f}"
+                dir_data = direct_data[direct_data['Scheme Name'] == scheme]
+                if not dir_data.empty:
+                    dir_reduction = float(dir_data['TER Reduction (%)'].iloc[0])
+                    row['Dir Old TER %'] = f"{float(dir_data['Old Direct Plan - Base TER (%)'].iloc[0]):.2f}"
+                    row['Dir New TER %'] = f"{float(dir_data['New Direct Plan - Base TER (%)'].iloc[0]):.2f}"
                     row['Dir Reduction %'] = f"{dir_reduction:.2f}"
                 else:
-                    row['Dir Old TER %'] = 'N/A'
-                    row['Dir New TER %'] = 'N/A'
-                    row['Dir Reduction %'] = 'N/A'
-            
-            # Calculate difference (Reg - Dir) for sorting
-            if reg_reduction is not None and dir_reduction is not None:
-                row['Difference %'] = reg_reduction - dir_reduction
-                row['Is New'] = scheme not in previous_schemes if previous_baseline is not None else True
+                    row['Dir Old TER %'] = row['Dir New TER %'] = row['Dir Reduction %'] = 'N/A'
             else:
-                row['Difference %'] = 0
-                row['Is New'] = scheme not in previous_schemes if previous_baseline is not None else True
+                row['Dir Old TER %'] = row['Dir New TER %'] = row['Dir Reduction %'] = 'N/A'
             
-            combined_data.append(row)
+            row['Difference %'] = reg_reduction - dir_reduction if (reg_reduction and dir_reduction) else 0
+            if scheme not in previous_schemes:
+                new_count += 1
+            
+            combined_rows.append(row)
         
-        # Convert to DataFrame for sorting
-        combined_df = pd.DataFrame(combined_data)
-        
-        # Sort by absolute difference descending, then by Difference descending
+        # Convert to DataFrame and sort
+        combined_df = pd.DataFrame(combined_rows)
         combined_df['Diff_Value'] = combined_df['Difference %'].astype(float)
         combined_df = combined_df.sort_values('Diff_Value', ascending=False, key=abs)
         
-        # Display the combined table with all data
+        # Create table output
         display_cols = ['Scheme Name', 'Reg Old TER %', 'Reg New TER %', 'Reg Reduction %', 
                        'Dir Old TER %', 'Dir New TER %', 'Dir Reduction %', 'Difference %']
-        display_df = combined_df[display_cols].copy()
-        
-        message += display_df.to_string(index=False)
+        message += combined_df[display_cols].to_string(index=False)
         message += "\n\n"
         
-        # Add summary stats
+        # Add summary
         message += "=" * 150 + "\n"
         message += "SUMMARY\n"
         message += "=" * 150 + "\n"
@@ -433,120 +399,32 @@ def create_notification_message():
             message += f"Regular Plan: {len(regular_data)} schemes with TER reductions\n"
         if direct_data is not None:
             message += f"Direct Plan: {len(direct_data)} schemes with TER reductions\n"
-        
-        # Count new changes
-        if previous_baseline is not None:
-            new_count = int(combined_df['Is New'].sum())
-            message += f"NEW Changes (since last update): {new_count} schemes\n"
-        else:
-            message += "NEW Changes (since last update): All schemes (baseline update)\n"
-        
-        message += "\n"
+        message += f"NEW Changes (since last update): {new_count} schemes\n\n"
     else:
         message = "No TER change data available for today."
     
-    # Save formatted message for webhook (with encoding handling)
+    # Save message
     try:
         with open('notification_message.txt', 'w', encoding='utf-8') as f:
             f.write(message)
-        logger.info("Notification message saved to notification_message.txt")
+        logger.info("Notification message saved")
     except Exception as e:
         logger.error(f"Error saving notification message: {e}")
     
-    return message
-
-def generate_notification_data():
-    """
-    Generate detailed notification data with actual data from CSV files
-    """
-    summary = {
-        'date': str(datetime.now().date()),
-        'regular_count': 0,
-        'direct_count': 0,
-        'comparison_count': 0,
-        'regular_changes': [],
-        'direct_changes': [],
-        'comparison_data': []
-    }
-    
-    output_dir = Path('output')
-    if output_dir.exists():
-        # Read Regular Plan changes
-        regular_file = list(output_dir.glob('Regular_Plan_TER_Changes_*.csv'))
-        if regular_file:
-            try:
-                df = pd.read_csv(regular_file[0])
-                summary['regular_count'] = len(df)
-                # Get top 5 changes
-                top_changes = df.nlargest(5, 'TER Reduction (%)')
-                for idx, row in top_changes.iterrows():
-                    summary['regular_changes'].append({
-                        'scheme': row['Scheme Name'],
-                        'old_ter': float(row['Old TER (%)']),
-                        'new_ter': float(row['New TER (%)']),
-                        'reduction': float(row['TER Reduction (%)'])
-                    })
-                logger.info(f"Regular Plan: {summary['regular_count']} changes")
-            except Exception as e:
-                logger.warning(f"Could not read Regular Plan file: {e}")
-        
-        # Read Direct Plan changes
-        direct_file = list(output_dir.glob('Direct_Plan_TER_Changes_*.csv'))
-        if direct_file:
-            try:
-                df = pd.read_csv(direct_file[0])
-                summary['direct_count'] = len(df)
-                # Get top 5 changes
-                top_changes = df.nlargest(5, 'TER Reduction (%)')
-                for idx, row in top_changes.iterrows():
-                    summary['direct_changes'].append({
-                        'scheme': row['Scheme Name'],
-                        'old_ter': float(row['Old TER (%)']),
-                        'new_ter': float(row['New TER (%)']),
-                        'reduction': float(row['TER Reduction (%)'])
-                    })
-                logger.info(f"Direct Plan: {summary['direct_count']} changes")
-            except Exception as e:
-                logger.warning(f"Could not read Direct Plan file: {e}")
-        
-        # Read Comparison data
-        comparison_file = list(output_dir.glob('*Regular_vs_Direct*.csv'))
-        if comparison_file:
-            try:
-                df = pd.read_csv(comparison_file[0])
-                summary['comparison_count'] = len(df)
-                # Get top positive and negative differences
-                top_differences = pd.concat([
-                    df.nlargest(3, 'Difference (%)'),
-                    df.nsmallest(3, 'Difference (%)')
-                ]).drop_duplicates()
-                
-                for idx, row in top_differences.iterrows():
-                    summary['comparison_data'].append({
-                        'scheme': row['Scheme Name'],
-                        'regular_reduction': float(row['TER Reduction (%)_Regular']),
-                        'direct_reduction': float(row['TER Reduction (%)_Direct']),
-                        'difference': float(row['Difference (%)'])
-                    })
-                logger.info(f"Comparison: {summary['comparison_count']} schemes")
-            except Exception as e:
-                logger.warning(f"Could not read Comparison file: {e}")
-    
-    # Write summary to JSON for GitHub Actions
+    # Write summary JSON
     try:
         with open('analysis_summary.json', 'w') as f:
             json.dump(summary, f, indent=2)
-        logger.info(f"Summary: Regular={summary['regular_count']}, Direct={summary['direct_count']}, Comparison={summary['comparison_count']}")
+        logger.info(f"Summary: Regular={summary['regular_count']}, Direct={summary['direct_count']}")
     except Exception as e:
         logger.error(f"Error writing summary: {e}")
     
-    return summary
+    return message
 
 if __name__ == '__main__':
     try:
         analyze_daily()
-        generate_notification_data()
-        create_notification_message()
+        generate_notification()
     except Exception as e:
         logger.error(f"Fatal error: {e}", exc_info=True)
         exit(1)
