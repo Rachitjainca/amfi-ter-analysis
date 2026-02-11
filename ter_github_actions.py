@@ -287,13 +287,16 @@ def analyze_daily():
     logger.info("Analysis completed successfully")
     logger.info("=" * 60)
 
-def format_table(df, max_rows=10):
+def format_table(df, max_rows=None):
     """Format DataFrame as ASCII table string"""
     if df.empty:
         return "No data available"
     
-    # Limit rows for display
-    display_df = df.head(max_rows).copy()
+    # Use all rows if max_rows is None, otherwise limit
+    if max_rows is not None:
+        display_df = df.head(max_rows).copy()
+    else:
+        display_df = df.copy()
     
     # Format numeric columns for better display
     for col in display_df.columns:
@@ -305,71 +308,91 @@ def format_table(df, max_rows=10):
     return table_str
 
 def create_notification_message():
-    """Create detailed notification message with formatted tables"""
-    message = ""
+    """Create detailed notification message with ALL formatted data combined"""
     output_dir = Path('output')
     
-    # Regular Plan Table
+    # Read both Regular and Direct plan files
+    regular_data = None
+    direct_data = None
+    
     regular_file = list(output_dir.glob('Regular_Plan_TER_Changes_*.csv')) if output_dir.exists() else []
     if regular_file:
         try:
-            df = pd.read_csv(regular_file[0])
-            message += f"REGULAR PLAN TER CHANGES ({len(df)} schemes)\n"
-            message += "=" * 100 + "\n"
-            
-            # Select columns for display - be flexible with naming
-            display_cols = []
-            for col in df.columns:
-                if 'Scheme Name' in col:
-                    display_cols.append(col)
-                    break
-            
-            for col in df.columns:
-                if 'Old' in col and 'Regular' in col:
-                    display_cols.append(col)
-                elif 'New' in col and 'Regular' in col:
-                    display_cols.append(col)
-                elif 'Reduction' in col and 'TER' in col:
-                    display_cols.append(col)
-            
-            if len(display_cols) >= 2:
-                display_df = df[display_cols].copy()
-                message += format_table(display_df, max_rows=15) + "\n\n"
-            else:
-                message += format_table(df.head(10)) + "\n\n"
+            regular_data = pd.read_csv(regular_file[0])
         except Exception as e:
-            logger.warning(f"Could not format Regular Plan table: {e}")
+            logger.warning(f"Could not read Regular Plan file: {e}")
     
-    # Direct Plan Table
     direct_file = list(output_dir.glob('Direct_Plan_TER_Changes_*.csv')) if output_dir.exists() else []
     if direct_file:
         try:
-            df = pd.read_csv(direct_file[0])
-            message += f"DIRECT PLAN TER CHANGES ({len(df)} schemes)\n"
-            message += "=" * 100 + "\n"
-            
-            # Select columns for display - be flexible with naming
-            display_cols = []
-            for col in df.columns:
-                if 'Scheme Name' in col:
-                    display_cols.append(col)
-                    break
-            
-            for col in df.columns:
-                if 'Old' in col and 'Direct' in col:
-                    display_cols.append(col)
-                elif 'New' in col and 'Direct' in col:
-                    display_cols.append(col)
-                elif 'Reduction' in col and 'TER' in col:
-                    display_cols.append(col)
-            
-            if len(display_cols) >= 2:
-                display_df = df[display_cols].copy()
-                message += format_table(display_df, max_rows=15) + "\n\n"
-            else:
-                message += format_table(df.head(10)) + "\n\n"
+            direct_data = pd.read_csv(direct_file[0])
         except Exception as e:
-            logger.warning(f"Could not format Direct Plan table: {e}")
+            logger.warning(f"Could not read Direct Plan file: {e}")
+    
+    # Create combined view with both plans side by side
+    message = ""
+    
+    if regular_data is not None or direct_data is not None:
+        message += "=" * 150 + "\n"
+        message += "AMFI MUTUAL FUND - TER REDUCTIONS (REGULAR vs DIRECT PLAN)\n"
+        message += "=" * 150 + "\n\n"
+        
+        # Create combined table
+        combined_data = []
+        
+        # Get scheme names not in both
+        regular_schemes = set(regular_data['Scheme Name'].unique()) if regular_data is not None else set()
+        direct_schemes = set(direct_data['Scheme Name'].unique()) if direct_data is not None else set()
+        all_schemes = sorted(regular_schemes.union(direct_schemes))
+        
+        # Build combined rows
+        for scheme in all_schemes:
+            row = {'Scheme Name': scheme}
+            
+            # Regular plan data
+            if regular_data is not None:
+                reg_scheme = regular_data[regular_data['Scheme Name'] == scheme]
+                if not reg_scheme.empty:
+                    row['Reg Old TER %'] = f"{float(reg_scheme['Old Regular Plan - Base TER (%)'].iloc[0]):.2f}"
+                    row['Reg New TER %'] = f"{float(reg_scheme['New Regular Plan - Base TER (%)'].iloc[0]):.2f}"
+                    row['Reg Reduction %'] = f"{float(reg_scheme['TER Reduction (%)'].iloc[0]):.2f}"
+                else:
+                    row['Reg Old TER %'] = 'N/A'
+                    row['Reg New TER %'] = 'N/A'
+                    row['Reg Reduction %'] = 'N/A'
+            
+            # Direct plan data
+            if direct_data is not None:
+                dir_scheme = direct_data[direct_data['Scheme Name'] == scheme]
+                if not dir_scheme.empty:
+                    row['Dir Old TER %'] = f"{float(dir_scheme['Old Direct Plan - Base TER (%)'].iloc[0]):.2f}"
+                    row['Dir New TER %'] = f"{float(dir_scheme['New Direct Plan - Base TER (%)'].iloc[0]):.2f}"
+                    row['Dir Reduction %'] = f"{float(dir_scheme['TER Reduction (%)'].iloc[0]):.2f}"
+                else:
+                    row['Dir Old TER %'] = 'N/A'
+                    row['Dir New TER %'] = 'N/A'
+                    row['Dir Reduction %'] = 'N/A'
+            
+            combined_data.append(row)
+        
+        # Convert to DataFrame for display
+        combined_df = pd.DataFrame(combined_data)
+        
+        # Display the combined table with all data
+        message += combined_df.to_string(index=False)
+        message += "\n\n"
+        
+        # Add summary stats
+        message += "=" * 150 + "\n"
+        message += "SUMMARY\n"
+        message += "=" * 150 + "\n"
+        if regular_data is not None:
+            message += f"Regular Plan: {len(regular_data)} schemes with TER reductions\n"
+        if direct_data is not None:
+            message += f"Direct Plan: {len(direct_data)} schemes with TER reductions\n"
+        message += "\n"
+    else:
+        message = "No TER change data available for today."
     
     # Save formatted message for webhook (with encoding handling)
     try:
