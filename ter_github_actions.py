@@ -257,6 +257,15 @@ def analyze_daily():
     else:
         logger.info("Direct Plan: No changes found")
     
+    # Save today's TER data as baseline for next day comparison
+    try:
+        baseline_file = 'baseline_ter_data.csv'
+        # Save current TER data to use as baseline for tomorrow
+        current_df.to_csv(baseline_file, index=False)
+        logger.info(f"Baseline TER data saved to {baseline_file}")
+    except Exception as e:
+        logger.error(f"Error saving baseline data: {e}")
+    
     # Generate comparison between Regular and Direct
     if len(regular_changes) > 0 and len(direct_changes) > 0:
         try:
@@ -272,6 +281,9 @@ def analyze_daily():
             
             if len(comparison) > 0:
                 comparison['Difference (%)'] = comparison['TER Reduction (%)_Direct'] - comparison['TER Reduction (%)_Regular']
+                comparison['Abs Difference (%)'] = comparison['Difference (%)'].abs()
+                # Sort by absolute difference descending
+                comparison = comparison.sort_values('Abs Difference (%)', ascending=False)
                 output_file = f"output/Regular_vs_Direct_TER_Changes_{today}.csv"
                 comparison.to_csv(output_file, index=False)
                 logger.info(f"Regular vs Direct: {len(comparison)} common schemes with changes")
@@ -308,7 +320,7 @@ def format_table(df, max_rows=None):
     return table_str
 
 def create_notification_message():
-    """Create detailed notification message with ALL formatted data combined"""
+    """Create detailed notification message with ALL formatted data combined and sorted by difference"""
     output_dir = Path('output')
     
     # Read both Regular and Direct plan files
@@ -329,12 +341,23 @@ def create_notification_message():
         except Exception as e:
             logger.warning(f"Could not read Direct Plan file: {e}")
     
-    # Create combined view with both plans side by side
+    # Load previous baseline to identify NEW changes only
+    previous_baseline = None
+    previous_schemes = set()
+    try:
+        if Path('baseline_ter_data.csv').exists():
+            previous_baseline = pd.read_csv('baseline_ter_data.csv')
+            previous_schemes = set(previous_baseline['Scheme Name'].unique())
+            logger.info(f"Loaded previous baseline with {len(previous_schemes)} schemes")
+    except Exception as e:
+        logger.warning(f"Could not load previous baseline: {e}")
+    
+    # Create combined view with both plans and identify NEW changes
     message = ""
     
     if regular_data is not None or direct_data is not None:
         message += "=" * 150 + "\n"
-        message += "AMFI MUTUAL FUND - TER REDUCTIONS (REGULAR vs DIRECT PLAN)\n"
+        message += "AMFI MUTUAL FUND - TER REDUCTIONS (REGULAR vs DIRECT PLAN) - SORTED BY HIGHEST DIFFERENCE\n"
         message += "=" * 150 + "\n\n"
         
         # Create combined table
@@ -348,14 +371,17 @@ def create_notification_message():
         # Build combined rows
         for scheme in all_schemes:
             row = {'Scheme Name': scheme}
+            reg_reduction = None
+            dir_reduction = None
             
             # Regular plan data
             if regular_data is not None:
                 reg_scheme = regular_data[regular_data['Scheme Name'] == scheme]
                 if not reg_scheme.empty:
+                    reg_reduction = float(reg_scheme['TER Reduction (%)'].iloc[0])
                     row['Reg Old TER %'] = f"{float(reg_scheme['Old Regular Plan - Base TER (%)'].iloc[0]):.2f}"
                     row['Reg New TER %'] = f"{float(reg_scheme['New Regular Plan - Base TER (%)'].iloc[0]):.2f}"
-                    row['Reg Reduction %'] = f"{float(reg_scheme['TER Reduction (%)'].iloc[0]):.2f}"
+                    row['Reg Reduction %'] = f"{reg_reduction:.2f}"
                 else:
                     row['Reg Old TER %'] = 'N/A'
                     row['Reg New TER %'] = 'N/A'
@@ -365,21 +391,38 @@ def create_notification_message():
             if direct_data is not None:
                 dir_scheme = direct_data[direct_data['Scheme Name'] == scheme]
                 if not dir_scheme.empty:
+                    dir_reduction = float(dir_scheme['TER Reduction (%)'].iloc[0])
                     row['Dir Old TER %'] = f"{float(dir_scheme['Old Direct Plan - Base TER (%)'].iloc[0]):.2f}"
                     row['Dir New TER %'] = f"{float(dir_scheme['New Direct Plan - Base TER (%)'].iloc[0]):.2f}"
-                    row['Dir Reduction %'] = f"{float(dir_scheme['TER Reduction (%)'].iloc[0]):.2f}"
+                    row['Dir Reduction %'] = f"{dir_reduction:.2f}"
                 else:
                     row['Dir Old TER %'] = 'N/A'
                     row['Dir New TER %'] = 'N/A'
                     row['Dir Reduction %'] = 'N/A'
             
+            # Calculate difference (Reg - Dir) for sorting
+            if reg_reduction is not None and dir_reduction is not None:
+                row['Difference %'] = reg_reduction - dir_reduction
+                row['Is New'] = scheme not in previous_schemes if previous_baseline is not None else True
+            else:
+                row['Difference %'] = 0
+                row['Is New'] = scheme not in previous_schemes if previous_baseline is not None else True
+            
             combined_data.append(row)
         
-        # Convert to DataFrame for display
+        # Convert to DataFrame for sorting
         combined_df = pd.DataFrame(combined_data)
         
+        # Sort by absolute difference descending, then by Difference descending
+        combined_df['Diff_Value'] = combined_df['Difference %'].astype(float)
+        combined_df = combined_df.sort_values('Diff_Value', ascending=False, key=abs)
+        
         # Display the combined table with all data
-        message += combined_df.to_string(index=False)
+        display_cols = ['Scheme Name', 'Reg Old TER %', 'Reg New TER %', 'Reg Reduction %', 
+                       'Dir Old TER %', 'Dir New TER %', 'Dir Reduction %', 'Difference %']
+        display_df = combined_df[display_cols].copy()
+        
+        message += display_df.to_string(index=False)
         message += "\n\n"
         
         # Add summary stats
@@ -390,6 +433,14 @@ def create_notification_message():
             message += f"Regular Plan: {len(regular_data)} schemes with TER reductions\n"
         if direct_data is not None:
             message += f"Direct Plan: {len(direct_data)} schemes with TER reductions\n"
+        
+        # Count new changes
+        if previous_baseline is not None:
+            new_count = int(combined_df['Is New'].sum())
+            message += f"NEW Changes (since last update): {new_count} schemes\n"
+        else:
+            message += "NEW Changes (since last update): All schemes (baseline update)\n"
+        
         message += "\n"
     else:
         message = "No TER change data available for today."
