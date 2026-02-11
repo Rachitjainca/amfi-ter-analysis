@@ -12,14 +12,14 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Download TER analysis artifacts
-        uses: dawidd6/action-download-artifact@v2
         with:
-          workflow: ter_analysis.yml
-          path: ./
-          skip_unpack: false
-        continue-on-error: true
+          fetch-depth: 0
+
+      - name: Pull latest changes
+        run: |
+          git config --global user.email "action@github.com"
+          git config --global user.name "GitHub Action"
+          git pull origin main || true
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -28,7 +28,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install pandas
+          pip install pandas requests
 
       - name: Generate TER Comparison Report
         run: |

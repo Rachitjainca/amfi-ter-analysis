@@ -2,18 +2,43 @@ import pandas as pd
 import os
 import sys
 
-# Check if output directory exists
-if not os.path.exists('./output'):
-    print("❌ Output directory not found. Running TER analysis first...")
-    sys.exit(1)
+print("=" * 80)
+print("TER Comparison Report Generator")
+print("=" * 80)
+
+# List what files we have
+print("\n📁 Checking for required files...")
+direct_file = './output/Direct_Plan_TER_Changes.csv'
+regular_file = './output/Regular_Plan_TER_Changes.csv'
+
+if not os.path.exists(direct_file):
+    print(f"❌ Missing: {direct_file}")
+else:
+    print(f"✅ Found: {direct_file}")
+
+if not os.path.exists(regular_file):
+    print(f"❌ Missing: {regular_file}")
+else:
+    print(f"✅ Found: {regular_file}")
 
 # Read both CSV files with error handling
+print("\n📖 Reading CSV files...")
 try:
-    direct_df = pd.read_csv('./output/Direct_Plan_TER_Changes.csv')
-    regular_df = pd.read_csv('./output/Regular_Plan_TER_Changes.csv')
+    direct_df = pd.read_csv(direct_file)
+    print(f"✅ Loaded Direct Plan data: {len(direct_df)} records")
+    regular_df = pd.read_csv(regular_file)
+    print(f"✅ Loaded Regular Plan data: {len(regular_df)} records")
 except FileNotFoundError as e:
-    print(f"❌ Error: Required CSV files not found: {e}")
-    print("Please ensure TER analysis workflow has completed successfully.")
+    print(f"\n❌ ERROR: Required CSV files not found")
+    print(f"Details: {e}")
+    print("\nPlease ensure:")
+    print("1. TER analysis workflow has completed successfully")
+    print("2. CSV files have been committed to the repository")
+    print("3. Latest changes have been pulled")
+    sys.exit(1)
+except Exception as e:
+    print(f"\n❌ ERROR: Failed to read CSV files")
+    print(f"Details: {e}")
     sys.exit(1)
 
 # Rename columns for clarity
