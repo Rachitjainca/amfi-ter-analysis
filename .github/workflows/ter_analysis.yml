@@ -1,0 +1,61 @@
+name: AMFI TER Daily Analysis
+
+# Run daily at 9:00 AM (UTC+5:30 = 3:30 UTC)
+on:
+  schedule:
+    - cron: '30 3 * * *'  # 9:00 AM IST (UTC+5:30)
+  
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  ter-analysis:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pandas openpyxl requests
+    
+    - name: Create directories
+      run: |
+        mkdir -p downloads output history logs
+    
+    - name: Download and analyze TER files
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: python ter_github_actions.py
+    
+    - name: List generated files
+      run: |
+        echo "=== Downloads ==="
+        ls -lh downloads/ 2>/dev/null || echo "No downloads yet"
+        echo ""
+        echo "=== Output Files ==="
+        ls -lh output/ 2>/dev/null || echo "No output files"
+    
+    - name: Commit and push results
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Add all files
+        git add -A
+        
+        # Check if there are changes
+        if git diff --cached --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "Auto: AMFI TER Analysis - $(date +'%Y-%m-%d %H:%M:%S')"
+          git push origin main
+        fi
+      continue-on-error: true
