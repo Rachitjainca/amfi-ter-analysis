@@ -40,16 +40,17 @@ jobs:
             MESSAGE_FILE="./notification_message.txt"
           fi
           
+          # Set simple flags if files exist
           if [ -f "$SUMMARY_FILE" ]; then
-            echo "SUMMARY<<SUMMARY_EOF" >> $GITHUB_OUTPUT
-            cat $SUMMARY_FILE >> $GITHUB_OUTPUT
-            echo "SUMMARY_EOF" >> $GITHUB_OUTPUT
+            echo "SUMMARY_EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "SUMMARY_EXISTS=false" >> $GITHUB_ENV
           fi
           
           if [ -f "$MESSAGE_FILE" ]; then
-            echo "MESSAGE<<MESSAGE_EOF" >> $GITHUB_OUTPUT
-            cat $MESSAGE_FILE | head -50 >> $GITHUB_OUTPUT
-            echo "MESSAGE_EOF" >> $GITHUB_OUTPUT
+            echo "MESSAGE_EXISTS=true" >> $GITHUB_ENV
+          else
+            echo "MESSAGE_EXISTS=false" >> $GITHUB_ENV
           fi
         continue-on-error: true
 
@@ -63,95 +64,92 @@ jobs:
           WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           REPO: ${{ github.repository }}
           RUN_ID: ${{ github.event.workflow_run.id }}
-        run: |
-          import json
-          import requests
-          import os
-          from datetime import datetime
-          
-          webhook_url = os.getenv('WEBHOOK_URL')
-          if not webhook_url:
-              print("❌ GOOGLE_CHAT_WEBHOOK_URL not configured")
-              exit(1)
-          
-          conclusion = os.getenv('WORKFLOW_CONCLUSION', 'unknown')
-          repo = os.getenv('REPO', '')
-          run_id = os.getenv('RUN_ID', '')
-          
-          # Determine status emoji and text
-          if conclusion == 'success':
-              status_emoji = '✅'
-              status_text = 'Success'
-              theme_color = '#34A853'  # Green
-          elif conclusion == 'failure':
-              status_emoji = '❌'
-              status_text = 'Failed'
-              theme_color = '#EA4335'  # Red
-          else:
-              status_emoji = '⚠️'
-              status_text = conclusion.capitalize()
-              theme_color = '#FBBC04'  # Yellow
-          
-          # Build the message
-          message = {
-              "cards": [{
-                  "header": {
-                      "title": "AMFI TER Daily Analysis",
-                      "subtitle": f"Analysis Report - {datetime.now().strftime('%Y-%m-%d %H:%M:%S IST')}"
-                  },
-                  "sections": [
-                      {
-                          "widgets": [
-                              {
-                                  "keyValue": {
-                                      "topLabel": "Status",
-                                      "content": f"{status_emoji} {status_text}",
-                                      "contentMultiline": False
-                                  }
-                              }
-                          ]
-                      },
-                      {
-                          "widgets": [
-                              {
-                                  "keyValue": {
-                                      "topLabel": "Repository",
-                                      "content": repo,
-                                      "contentMultiline": False
-                              }
-                              },
-                              {
-                                  "keyValue": {
-                                      "topLabel": "Workflow Run",
-                                      "content": f"<a href='https://github.com/{repo}/actions/runs/{run_id}'>View Details</a>",
-                                      "contentMultiline": False
-                              }
-                              }
-                          ]
-                      },
-                      {
-                          "widgets": [
-                              {
-                                  "textParagraph": {
-                                      "text": "<b>📊 Analysis Summary</b><br>Click 'View Details' to see full results with TER change details and scheme comparisons."
-                                  }
-                              }
-                          ]
-                      }
-                  ]
-              }]
-          }
-          
-          try:
-              response = requests.post(webhook_url, json=message, timeout=10)
-              if response.status_code == 200:
-                  print(f"✅ Notification sent successfully to Google Chat")
-              else:
-                  print(f"❌ Failed to send notification: {response.status_code}")
-                  print(response.text)
-          except Exception as e:
-              print(f"❌ Error sending notification: {e}")
-        shell: python
+        run: python3 << 'EOF'
+import json
+import requests
+import os
+from datetime import datetime
+
+webhook_url = os.getenv('WEBHOOK_URL')
+if not webhook_url:
+    print("❌ GOOGLE_CHAT_WEBHOOK_URL not configured")
+    exit(1)
+
+conclusion = os.getenv('WORKFLOW_CONCLUSION', 'unknown')
+repo = os.getenv('REPO', '')
+run_id = os.getenv('RUN_ID', '')
+
+# Determine status emoji and text
+if conclusion == 'success':
+    status_emoji = '✅'
+    status_text = 'Success'
+elif conclusion == 'failure':
+    status_emoji = '❌'
+    status_text = 'Failed'
+else:
+    status_emoji = '⚠️'
+    status_text = conclusion.capitalize()
+
+# Build the message
+message = {
+    "cards": [{
+        "header": {
+            "title": "AMFI TER Daily Analysis",
+            "subtitle": f"Analysis Report - {datetime.now().strftime('%Y-%m-%d %H:%M:%S IST')}"
+        },
+        "sections": [
+            {
+                "widgets": [
+                    {
+                        "keyValue": {
+                            "topLabel": "Status",
+                            "content": f"{status_emoji} {status_text}",
+                            "contentMultiline": False
+                        }
+                    }
+                ]
+            },
+            {
+                "widgets": [
+                    {
+                        "keyValue": {
+                            "topLabel": "Repository",
+                            "content": repo,
+                            "contentMultiline": False
+                        }
+                    },
+                    {
+                        "keyValue": {
+                            "topLabel": "Workflow Run",
+                            "content": f"View: https://github.com/{repo}/actions/runs/{run_id}",
+                            "contentMultiline": False
+                        }
+                    }
+                ]
+            },
+            {
+                "widgets": [
+                    {
+                        "textParagraph": {
+                            "text": "📊 TER Analysis Complete"
+                        }
+                    }
+                ]
+            }
+        ]
+    }]
+}
+
+try:
+    response = requests.post(webhook_url, json=message, timeout=10)
+    if response.status_code == 200:
+        print(f"✅ Notification sent successfully to Google Chat")
+    else:
+        print(f"❌ Failed to send notification: {response.status_code}")
+        print(response.text)
+except Exception as e:
+    print(f"❌ Error sending notification: {e}")
+EOF
 
       - name: Handle missing webhook
         if: failure()
