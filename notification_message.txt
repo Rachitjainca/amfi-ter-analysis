@@ -1,0 +1,38 @@
+REGULAR PLAN TER CHANGES (689 schemes)
+====================================================================================================
+                                              Scheme Name Old Regular Plan - Base TER (%) New Regular Plan - Base TER (%) TER Reduction (%)
+                                   Abakkus Flexi Cap Fund                            1.84                            1.80              0.04
+                   Aditya Birla Sun Life Medium Term Plan                            1.45                            1.44              0.01
+                    Aditya Birla Sun Life Short Term Fund                            0.95                            0.94              0.01
+                Aditya Birla Sun Life Dividend Yield Fund                            1.96                            1.95              0.01
+                Aditya Birla Sun Life ELSS Tax Saver Fund                            1.56                            1.55              0.01
+                     Aditya Birla Sun Life Flexi Cap Fund                            1.49                            1.48              0.01
+                       Aditya Birla Sun Life Focused Fund                            1.64                            1.63              0.01
+               Aditya Birla Sun Life Large & Mid Cap Fund                            1.70                            1.69              0.01
+                     Aditya Birla Sun Life Multi-Cap Fund                            1.67                            1.66              0.01
+                        Aditya Birla Sun Life MIDCAP Fund                            1.69                            1.68              0.01
+                     Aditya Birla Sun Life Small Cap Fund                            1.73                            1.72              0.01
+                   Aditya Birla Sun Life Consumption Fund                            1.68                            1.67              0.01
+                Aditya Birla Sun Life Infrastructure Fund                            2.04                            2.02              0.02
+Aditya Birla Sun Life Banking and Financial Services Fund                            1.77                            1.76              0.01
+                    Aditya Birla Sun Life PSU Equity Fund                            1.70                            1.69              0.01
+
+DIRECT PLAN TER CHANGES (706 schemes)
+====================================================================================================
+                               Scheme Name Old Direct Plan - Base TER (%) New Direct Plan - Base TER (%) TER Reduction (%)
+                      360 ONE Focused Fund                           0.66                           0.65              0.01
+                    Abakkus Flexi Cap Fund                           0.34                           0.32              0.02
+   Aditya Birla Sun Life Low Duration Fund                           0.37                           0.36              0.01
+    Aditya Birla Sun Life Medium Term Plan                           0.70                           0.69              0.01
+     Aditya Birla Sun Life Short Term Fund                           0.32                           0.31              0.01
+ Aditya Birla Sun Life Dividend Yield Fund                           1.11                           1.10              0.01
+ Aditya Birla Sun Life ELSS Tax Saver Fund                           0.83                           0.82              0.01
+      Aditya Birla Sun Life Flexi Cap Fund                           0.69                           0.68              0.01
+        Aditya Birla Sun Life Focused Fund                           0.71                           0.70              0.01
+Aditya Birla Sun Life Large & Mid Cap Fund                           0.89                           0.88              0.01
+      Aditya Birla Sun Life Multi-Cap Fund                           0.61                           0.60              0.01
+         Aditya Birla Sun Life MIDCAP Fund                           0.82                           0.83             -0.01
+      Aditya Birla Sun Life Small Cap Fund                           0.74                           0.73              0.01
+    Aditya Birla Sun Life Consumption Fund                           0.63                           0.62              0.01
+ Aditya Birla Sun Life Infrastructure Fund                           1.18                           1.16              0.02
+

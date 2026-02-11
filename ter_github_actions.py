@@ -287,6 +287,100 @@ def analyze_daily():
     logger.info("Analysis completed successfully")
     logger.info("=" * 60)
 
+def format_table(df, max_rows=10):
+    """Format DataFrame as ASCII table string"""
+    if df.empty:
+        return "No data available"
+    
+    # Limit rows for display
+    display_df = df.head(max_rows).copy()
+    
+    # Format numeric columns for better display
+    for col in display_df.columns:
+        if pd.api.types.is_numeric_dtype(display_df[col]):
+            display_df[col] = display_df[col].apply(lambda x: f"{x:.2f}")
+    
+    # Create formatted string
+    table_str = display_df.to_string(index=False)
+    return table_str
+
+def create_notification_message():
+    """Create detailed notification message with formatted tables"""
+    message = ""
+    output_dir = Path('output')
+    
+    # Regular Plan Table
+    regular_file = list(output_dir.glob('Regular_Plan_TER_Changes_*.csv')) if output_dir.exists() else []
+    if regular_file:
+        try:
+            df = pd.read_csv(regular_file[0])
+            message += f"REGULAR PLAN TER CHANGES ({len(df)} schemes)\n"
+            message += "=" * 100 + "\n"
+            
+            # Select columns for display - be flexible with naming
+            display_cols = []
+            for col in df.columns:
+                if 'Scheme Name' in col:
+                    display_cols.append(col)
+                    break
+            
+            for col in df.columns:
+                if 'Old' in col and 'Regular' in col:
+                    display_cols.append(col)
+                elif 'New' in col and 'Regular' in col:
+                    display_cols.append(col)
+                elif 'Reduction' in col and 'TER' in col:
+                    display_cols.append(col)
+            
+            if len(display_cols) >= 2:
+                display_df = df[display_cols].copy()
+                message += format_table(display_df, max_rows=15) + "\n\n"
+            else:
+                message += format_table(df.head(10)) + "\n\n"
+        except Exception as e:
+            logger.warning(f"Could not format Regular Plan table: {e}")
+    
+    # Direct Plan Table
+    direct_file = list(output_dir.glob('Direct_Plan_TER_Changes_*.csv')) if output_dir.exists() else []
+    if direct_file:
+        try:
+            df = pd.read_csv(direct_file[0])
+            message += f"DIRECT PLAN TER CHANGES ({len(df)} schemes)\n"
+            message += "=" * 100 + "\n"
+            
+            # Select columns for display - be flexible with naming
+            display_cols = []
+            for col in df.columns:
+                if 'Scheme Name' in col:
+                    display_cols.append(col)
+                    break
+            
+            for col in df.columns:
+                if 'Old' in col and 'Direct' in col:
+                    display_cols.append(col)
+                elif 'New' in col and 'Direct' in col:
+                    display_cols.append(col)
+                elif 'Reduction' in col and 'TER' in col:
+                    display_cols.append(col)
+            
+            if len(display_cols) >= 2:
+                display_df = df[display_cols].copy()
+                message += format_table(display_df, max_rows=15) + "\n\n"
+            else:
+                message += format_table(df.head(10)) + "\n\n"
+        except Exception as e:
+            logger.warning(f"Could not format Direct Plan table: {e}")
+    
+    # Save formatted message for webhook (with encoding handling)
+    try:
+        with open('notification_message.txt', 'w', encoding='utf-8') as f:
+            f.write(message)
+        logger.info("Notification message saved to notification_message.txt")
+    except Exception as e:
+        logger.error(f"Error saving notification message: {e}")
+    
+    return message
+
 def generate_notification_data():
     """
     Generate detailed notification data with actual data from CSV files
@@ -378,6 +472,7 @@ if __name__ == '__main__':
     try:
         analyze_daily()
         generate_notification_data()
+        create_notification_message()
     except Exception as e:
         logger.error(f"Fatal error: {e}", exc_info=True)
         exit(1)

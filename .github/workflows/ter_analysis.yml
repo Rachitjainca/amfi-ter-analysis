@@ -81,26 +81,51 @@ jobs:
         
         STATUS="${{ job.status }}"
         DATE=$(date '+%Y-%m-%d')
+        RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         
-        if [ -f analysis_summary.json ]; then
-          REGULAR=$(jq -r '.regular_count' analysis_summary.json)
-          DIRECT=$(jq -r '.direct_count' analysis_summary.json)
-          COMPARISON=$(jq -r '.comparison_count' analysis_summary.json)
-        else
-          REGULAR="N/A"
-          DIRECT="N/A"
-          COMPARISON="N/A"
+        # Read formatted message
+        MESSAGE=""
+        if [ -f notification_message.txt ]; then
+          MESSAGE=$(cat notification_message.txt)
         fi
         
-        MESSAGE="📊 AMFI TER Analysis Daily Update\n"
-        MESSAGE="${MESSAGE}Date: ${DATE}\n"
-        MESSAGE="${MESSAGE}Status: ${STATUS}\n"
-        MESSAGE="${MESSAGE}Regular Plan Changes: ${REGULAR}\n"
-        MESSAGE="${MESSAGE}Direct Plan Changes: ${DIRECT}\n"
-        MESSAGE="${MESSAGE}Comparison Schemes: ${COMPARISON}\n"
-        MESSAGE="${MESSAGE}View: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        # Create JSON payload and send
+        python3 << 'PYTHON_SCRIPT'
+        import json
+        import subprocess
+        import os
         
-        curl -X POST "${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}" \
-          -H 'Content-Type: application/json' \
-          -d "{\"text\": \"$(echo -e "$MESSAGE" | sed 's/"/\\"/g')\"}"
+        message = ""
+        status = "$STATUS"
+        date = "$DATE"
+        run_url = "$RUN_URL"
+        
+        # Read the formatted table message
+        if os.path.exists("notification_message.txt"):
+            with open("notification_message.txt", "r") as f:
+                message = f.read()
+        
+        # Build final message
+        final_message = f"📊 AMFI TER Daily Analysis - {date}\n\n"
+        final_message += message
+        final_message += f"\n\nStatus: {status}\nView: {run_url}"
+        
+        # Send to Google Chat
+        webhook_url = os.environ.get("GOOGLE_CHAT_WEBHOOK_URL", "")
+        if webhook_url:
+            payload = {"text": final_message}
+            import urllib.request
+            req = urllib.request.Request(
+                webhook_url,
+                data=json.dumps(payload).encode('utf-8'),
+                headers={'Content-Type': 'application/json'}
+            )
+            try:
+                with urllib.request.urlopen(req) as response:
+                    print(f"Notification sent. Status: {response.status}")
+            except Exception as e:
+                print(f"Error sending notification: {e}")
+        PYTHON_SCRIPT
+      env:
+        GOOGLE_CHAT_WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
       continue-on-error: true
