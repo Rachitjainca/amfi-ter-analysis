@@ -74,13 +74,35 @@ jobs:
         continue-on-error: true
         run: |
           if [ -z "$WEBHOOK_URL" ]; then
-            echo "Webhook not configured"
+            echo "❌ WEBHOOK_URL secret not configured in GitHub!"
+            echo "Please add GOOGLE_CHAT_WEBHOOK_URL to Settings > Secrets and variables > Actions"
             exit 0
           fi
           
-          MESSAGE=$(cat /tmp/message.txt 2>/dev/null || echo "AMFI TER Daily Analysis - Completed")
+          echo "✓ Webhook URL found, sending message..."
           
-          # Send to Google Chat using curl
-          curl -X POST "$WEBHOOK_URL" \
+          # Read the message file
+          if [ -f /tmp/message.txt ]; then
+            MESSAGE=$(cat /tmp/message.txt)
+            echo "Message content:"
+            echo "$MESSAGE"
+          else
+            MESSAGE="AMFI TER Daily Analysis - Completed"
+          fi
+          
+          # Escape JSON and send to Google Chat
+          ESCAPED_MESSAGE=$(printf '%s' "$MESSAGE" | jq -Rs .)
+          
+          HTTP_CODE=$(curl -s -w "%{http_code}" -o /tmp/webhook_response.txt \
+            -X POST "$WEBHOOK_URL" \
             -H 'Content-Type: application/json' \
-            -d "{\"text\":\"$(printf '%s' "$MESSAGE" | jq -Rs .)\"}" 2>/dev/null || echo "Failed to send notification"
+            -d "{\"text\":$ESCAPED_MESSAGE}")
+          
+          echo "HTTP Response Code: $HTTP_CODE"
+          cat /tmp/webhook_response.txt
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Message sent successfully!"
+          else
+            echo "❌ Failed to send message (HTTP $HTTP_CODE)"
+          fi
