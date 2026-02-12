@@ -55,7 +55,7 @@ jobs:
 
       - name: Generate CSV table for notification
         run: |
-          python3 > /tmp/message.txt << 'EOF'
+          cat > /tmp/generate_message.py << 'EOF'
 import csv
 import os
 from datetime import datetime
@@ -93,6 +93,7 @@ else:
 
 print(message)
 EOF
+          python3 /tmp/generate_message.py > /tmp/message.txt
 
       - name: Send notification to Google Chat
         if: always()
