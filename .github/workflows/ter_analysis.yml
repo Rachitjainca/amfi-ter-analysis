@@ -82,6 +82,7 @@ jobs:
         if: always()
         env:
           WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
+        continue-on-error: true
         run: |
           if [ -z "$WEBHOOK_URL" ]; then
             echo "Webhook URL not configured"
@@ -92,7 +93,7 @@ jobs:
           DATE=$(date '+%Y-%m-%d')
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
-          python3 << PYTHON_SCRIPT
+          cat > notify.py << 'EOF'
 import json
 import urllib.request
 import os
@@ -126,5 +127,5 @@ try:
         print("Webhook URL not configured")
 except Exception as e:
     print(f"Error: {e}")
-PYTHON_SCRIPT
-        continue-on-error: true
+EOF
+          python3 notify.py
