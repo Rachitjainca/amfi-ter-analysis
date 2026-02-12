@@ -55,40 +55,17 @@ jobs:
 
       - name: Generate CSV table for notification
         run: |
-          python3 -c "
-import csv
-import os
-from datetime import datetime
-
-csv_file = 'output/TER_Comparison_Comprehensive.csv'
-message = '🔔 AMFI TER Daily Analysis Report\n'
-message += f'Generated: {datetime.now().strftime(\"%Y-%m-%d %H:%M:%S IST\")}\n\n'
-message += 'TOP TER CHANGES:\n'
-message += '='*120 + '\n'
-
-if os.path.exists(csv_file):
-    with open(csv_file, 'r') as f:
-        reader = csv.reader(f)
-        headers = next(reader)
-        header_str = ' | '.join(headers[:6])
-        message += header_str + '\n'
-        message += '-'*120 + '\n'
-        count = 0
-        for row in reader:
-            if count >= 20:
-                break
-            if row:
-                row_str = ' | '.join(str(v)[:20] for v in row[:6])
-                message += row_str + '\n'
-                count += 1
-    message += '='*120 + '\n'
-    message += f'\nTotal changes displayed: {count} schemes\n'
-else:
-    message += 'No TER data found\n'
-
-with open('/tmp/message.txt', 'w') as f:
-    f.write(message)
-"
+          {
+            echo "🔔 AMFI TER Daily Analysis Report"
+            echo "Generated: $(date '+%Y-%m-%d %H:%M:%S IST')"
+            echo ""
+            echo "TOP TER CHANGES:"
+            echo "=============================================================================="
+            head -21 output/TER_Comparison_Comprehensive.csv | tail -20
+            echo "=============================================================================="
+            echo ""
+            echo "✅ Analysis Complete"
+          } > /tmp/message.txt
 
       - name: Send notification to Google Chat
         if: always()
@@ -103,7 +80,7 @@ with open('/tmp/message.txt', 'w') as f:
           
           MESSAGE=$(cat /tmp/message.txt 2>/dev/null || echo "AMFI TER Daily Analysis - Completed")
           
-          # Send to Google Chat
+          # Send to Google Chat using curl
           curl -X POST "$WEBHOOK_URL" \
             -H 'Content-Type: application/json' \
-            -d "{\"text\":\"$(echo "$MESSAGE" | jq -Rs .)\"}" || echo "Failed to send"
+            -d "{\"text\":\"$(printf '%s' "$MESSAGE" | jq -Rs .)\"}" 2>/dev/null || echo "Failed to send notification"
