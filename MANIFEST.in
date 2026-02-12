@@ -1,0 +1,10 @@
+include README.md
+include LICENSE
+include QUICKSTART.md
+include AUTOMATION_GUIDE.md
+include DEPLOYMENT_GUIDE.md
+include GITHUB_ACTIONS_GUIDE.md
+include GOOGLE_CHAT_SETUP.md
+recursive-include amfi_ter_analysis *.py
+recursive-exclude * __pycache__
+recursive-exclude * .pyc
