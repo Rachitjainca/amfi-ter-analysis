@@ -64,7 +64,8 @@ jobs:
           WORKFLOW_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           REPO: ${{ github.repository }}
           RUN_ID: ${{ github.event.workflow_run.id }}
-        run: python3 << 'EOF'
+        run: |
+          cat > send_notification.py << 'PYTHON_EOF'
 import json
 import requests
 import os
@@ -149,7 +150,8 @@ try:
         print(response.text)
 except Exception as e:
     print(f"❌ Error sending notification: {e}")
-EOF
+PYTHON_EOF
+          python3 send_notification.py
 
       - name: Handle missing webhook
         if: failure()
