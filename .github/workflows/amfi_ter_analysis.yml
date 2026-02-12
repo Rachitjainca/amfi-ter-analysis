@@ -59,30 +59,10 @@ jobs:
           WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
         continue-on-error: true
         run: |
-          python3 << 'EOF'
-import json
-import urllib.request
-import os
-from datetime import datetime
-
-webhook_url = os.environ.get('WEBHOOK_URL', '')
-if not webhook_url:
-    print("⚠️  Google Chat webhook not configured")
-    exit(0)
-
-try:
-    message_text = "AMFI TER Daily Analysis\n"
-    message_text += f"Run Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S IST')}\n"
-    message_text += "Status: Completed"
-    
-    payload = {"text": message_text}
-    req = urllib.request.Request(
-        webhook_url,
-        data=json.dumps(payload).encode('utf-8'),
-        headers={'Content-Type': 'application/json'}
-    )
-    response = urllib.request.urlopen(req)
-    print(f"✅ Notification sent (Status: {response.status})")
-except Exception as e:
-    print(f"⚠️  Could not send notification: {e}")
-EOF
+          if [ -n "$WEBHOOK_URL" ]; then
+            curl -X POST "$WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d '{"text":"AMFI TER Daily Analysis - Completed"}' || echo "Notification failed"
+          else
+            echo "Google Chat webhook not configured"
+          fi
