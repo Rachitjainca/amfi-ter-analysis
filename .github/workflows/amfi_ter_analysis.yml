@@ -59,10 +59,112 @@ jobs:
           WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
         continue-on-error: true
         run: |
-          if [ -n "$WEBHOOK_URL" ]; then
-            curl -X POST "$WEBHOOK_URL" \
-              -H "Content-Type: application/json" \
-              -d '{"text":"AMFI TER Daily Analysis - Completed"}' || echo "Notification failed"
-          else
-            echo "Google Chat webhook not configured"
-          fi
+          python3 << 'PYTHON_EOF'
+import json
+import urllib.request
+import os
+import csv
+from datetime import datetime
+
+webhook_url = os.environ.get('WEBHOOK_URL', '')
+if not webhook_url:
+    print("Google Chat webhook not configured")
+    exit(0)
+
+try:
+    # Read CSV file
+    csv_file = 'output/TER_Comparison_Comprehensive.csv'
+    rows = []
+    
+    if os.path.exists(csv_file):
+        with open(csv_file, 'r') as f:
+            reader = csv.DictReader(f)
+            headers = reader.fieldnames
+            for i, row in enumerate(reader):
+                if i >= 10:  # Show top 10 rows
+                    break
+                rows.append(row)
+    
+    # Build table for Google Chat
+    if rows:
+        # Create header row
+        table_rows = []
+        header_cells = []
+        for h in headers[:6]:  # Include first 6 columns
+            header_cells.append({
+                "textParagraph": {
+                    "text": f"<b>{h}</b>"
+                }
+            })
+        
+        table_rows.append({"cells": header_cells})
+        
+        # Add data rows
+        for row in rows:
+            cells = []
+            for col in headers[:6]:
+                value = str(row.get(col, ''))[:30]  # Truncate to 30 chars
+                cells.append({
+                    "textParagraph": {
+                        "text": value
+                    }
+                })
+            table_rows.append({"cells": cells})
+        
+        # Build Google Chat message
+        message = {
+            "cards": [{
+                "header": {
+                    "title": "AMFI TER Change Analysis Report",
+                    "subtitle": f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+                },
+                "sections": [
+                    {
+                        "widgets": [
+                            {
+                                "textParagraph": {
+                                    "text": f"Total schemes with changes: {len(rows)}"
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "widgets": [
+                            {
+                                "image": {
+                                    "imageUrl": "https://via.placeholder.com/1200x300?text=TER+Analysis+Report"
+                                }
+                            }
+                        ]
+                    }
+                ]
+            }]
+        }
+        
+        # Add table data as text
+        table_text = "\n" + "|".join(headers[:6]) + "\n" + "|".join(["-"*20]*6) + "\n"
+        for row in rows:
+            values = [str(row.get(col, ''))[:20] for col in headers[:6]]
+            table_text += "|".join(values) + "\n"
+        
+        # Send simple message with table as text
+        payload = {
+            "text": f"AMFI TER Change Analysis Report\n\n{table_text}\n\nView full report in GitHub output folder."
+        }
+    else:
+        payload = {
+            "text": "AMFI TER Daily Analysis - No TER changes detected"
+        }
+    
+    # Send to Google Chat
+    req = urllib.request.Request(
+        webhook_url,
+        data=json.dumps(payload).encode('utf-8'),
+        headers={'Content-Type': 'application/json'}
+    )
+    response = urllib.request.urlopen(req)
+    print(f"Notification sent successfully (Status: {response.status})")
+    
+except Exception as e:
+    print(f"Error sending notification: {e}")
+PYTHON_EOF
