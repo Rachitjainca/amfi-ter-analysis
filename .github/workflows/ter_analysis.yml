@@ -2,9 +2,11 @@ name: AMFI TER Daily Analysis
 
 on:
   schedule:
-    # Run daily at 7:35 AM IST (02:05 UTC)
+    # Run daily at 7:35 AM IST (02:05 UTC)  
     - cron: '5 2 * * *'
   workflow_dispatch:
+    branches:
+      - main
 
 jobs:
   ter-analysis:
