@@ -84,43 +84,33 @@ jobs:
           WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK_URL }}
         continue-on-error: true
         run: |
-          if [ -z "$WEBHOOK_URL" ]; then
-            echo "Webhook URL not configured"
-            exit 0
-          fi
-          
-          cat > send_notification.py << 'PYTHON_SCRIPT'
+          python3 << 'EOF'
 import json
 import urllib.request
 import os
 from datetime import datetime
 
+webhook_url = os.environ.get('WEBHOOK_URL', '')
+if not webhook_url:
+    print("Webhook URL not configured")
+    exit(0)
+
 try:
-    status = os.environ.get('STATUS', 'unknown')
-    webhook_url = os.environ.get('WEBHOOK_URL', '')
-    
     message = ""
     if os.path.exists("notification_message.txt"):
         with open("notification_message.txt", "r") as f:
             message = f.read()
     
-    final_message = f"AMFI TER Daily Analysis - {datetime.now().strftime('%Y-%m-%d')}\n\n{message}\n\nStatus: {status}"
+    final_message = f"AMFI TER Daily Analysis - {datetime.now().strftime('%Y-%m-%d')}\n\n{message}"
     
-    if webhook_url:
-        payload = {"text": final_message}
-        req = urllib.request.Request(
-            webhook_url,
-            data=json.dumps(payload).encode('utf-8'),
-            headers={'Content-Type': 'application/json'}
-        )
-        try:
-            with urllib.request.urlopen(req) as response:
-                print(f"Notification sent. Status: {response.status}")
-        except Exception as e:
-            print(f"Error sending notification: {e}")
-    else:
-        print("Webhook URL not configured")
+    payload = {"text": final_message}
+    req = urllib.request.Request(
+        webhook_url,
+        data=json.dumps(payload).encode('utf-8'),
+        headers={'Content-Type': 'application/json'}
+    )
+    response = urllib.request.urlopen(req)
+    print(f"Notification sent. Status: {response.status}")
 except Exception as e:
-    print(f"Error: {e}")
-PYTHON_SCRIPT
-          python3 send_notification.py
+    print(f"Error sending notification: {e}")
+EOF
