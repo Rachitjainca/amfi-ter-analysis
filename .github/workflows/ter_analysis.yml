@@ -89,19 +89,14 @@ jobs:
             exit 0
           fi
           
-          STATUS="${{ job.status }}"
-          DATE=$(date '+%Y-%m-%d')
-          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          
-          cat > notify.py << 'EOF'
+          cat > send_notification.py << 'PYTHON_SCRIPT'
 import json
 import urllib.request
 import os
+from datetime import datetime
 
 try:
     status = os.environ.get('STATUS', 'unknown')
-    date = os.environ.get('DATE', 'unknown')
-    run_url = os.environ.get('RUN_URL', '')
     webhook_url = os.environ.get('WEBHOOK_URL', '')
     
     message = ""
@@ -109,7 +104,7 @@ try:
         with open("notification_message.txt", "r") as f:
             message = f.read()
     
-    final_message = f"AMFI TER Daily Analysis - {date}\n\n{message}\n\nStatus: {status}\nView: {run_url}"
+    final_message = f"AMFI TER Daily Analysis - {datetime.now().strftime('%Y-%m-%d')}\n\n{message}\n\nStatus: {status}"
     
     if webhook_url:
         payload = {"text": final_message}
@@ -127,5 +122,5 @@ try:
         print("Webhook URL not configured")
 except Exception as e:
     print(f"Error: {e}")
-EOF
-          python3 notify.py
+PYTHON_SCRIPT
+          python3 send_notification.py
