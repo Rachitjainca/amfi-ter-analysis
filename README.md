@@ -1,93 +1,46 @@
-# AMFI TER Analysis - Package Distribution
+# amfi-ter-analysis
 
-## Installation
+Tracks changes in mutual fund Total Expense Ratios (TER) published by AMFI. Each run downloads the current TER workbook, compares base TER with the previous run for Regular and Direct plans, writes the changes to CSV and posts a summary to Google Chat.
 
-### PyPI (Recommended)
-```bash
-pip install amfi-ter-analysis
-```
+## How it works
 
-### Development Installation
-```bash
-git clone https://github.com/Rachitjainca/amfi-ter-analysis.git
-cd amfi-ter-analysis
+1. Download `https://www.amfiindia.com/api/populate-te-rdata-revised`.
+2. Compare with `data/baseline_ter.csv.gz` on `NSDL Scheme Code`. The first run only creates the baseline.
+3. Write `data/output/{Regular,Direct}_Plan_TER_Changes_<date>.csv`, `latest_message.txt` and `latest_summary.json`.
+4. Replace the baseline and, if anything changed, post to Google Chat.
+
+A positive `TER Reduction (%)` means the TER fell; a negative value means it rose.
+
+## Setup
+
+```powershell
+python -m venv .venv
+.venv\Scripts\activate
 pip install -e ".[dev]"
 ```
 
-### From Source
-```bash
-pip install .
+## Usage
+
+```powershell
+amfi-ter                 # run, write reports, notify if GOOGLE_CHAT_WEBHOOK_URL is set
+amfi-ter --no-notify     # reports only
 ```
 
-## Quick Start
+## GitHub Actions
 
-### Using as a Python Package
-```python
-from amfi_ter_analysis import download_ter_file, read_ter_file, find_ter_columns
-from amfi_ter_analysis import analyze_ter_changes
+`.github/workflows/amfi_ter_analysis.yml` runs daily at 08:10 IST and commits the updated `data/` folder.
 
-# Download TER files
-jan_file = download_ter_file(1, 2026)
-feb_file = download_ter_file(2, 2026)
+1. In Google Chat, add a webhook to your space and copy its URL.
+2. In the repository go to Settings > Secrets and variables > Actions and add `GOOGLE_CHAT_WEBHOOK_URL`.
+3. Trigger the workflow once from the Actions tab to create the baseline. Notifications start from the next day with changes.
 
-# Read and analyze
-jan_df = read_ter_file(jan_file)
-feb_df = read_ter_file(feb_file)
+The webhook URL contains a key and token. Keep it in the secret only, never in the code or the repository.
 
-# Get changes
-regular_changes, direct_changes = analyze_ter_changes(jan_df, feb_df)
+## Development
+
+```powershell
+pytest
+ruff check .
 ```
 
-### Using Daily Automation
-```python
-from amfi_ter_analysis import ter_daily_automation
-
-# Run daily analysis
-ter_daily_automation.main()
-```
-
-### Command Line Tool
-```bash
-amfi-ter-analysis
-```
-
-## Features
-
-- ✅ Automatic daily TER file downloads
-- ✅ TER changes comparison and analysis  
-- ✅ Category-based filtering and grouping
-- ✅ Google Chat notifications
-- ✅ GitHub Actions workflow integration
-- ✅ Comprehensive reporting and tracking
-- ✅ Daily automation with state management
-
-## Documentation
-
-- [Quick Start Guide](QUICKSTART.md)
-- [Automation Guide](AUTOMATION_GUIDE.md)
-- [GitHub Actions Setup](GITHUB_ACTIONS_GUIDE.md)
-- [Deployment Guide](DEPLOYMENT_GUIDE.md)
-- [Google Chat Integration](GOOGLE_CHAT_SETUP.md)
-
-## Requirements
-
-- Python 3.8+
-- pandas >= 1.3.0
-- openpyxl >= 3.7.0
-- requests >= 2.26.0
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Author
-
-Rachit Jain
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## Support
-
-For issues and feature requests, please visit: https://github.com/Rachitjainca/amfi-ter-analysis/issues
+Licensed under MIT, see LICENSE.
