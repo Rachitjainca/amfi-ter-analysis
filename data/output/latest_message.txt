@@ -1,37 +1,13 @@
-AMFI TER changes for 31 Oct 2026
+AMFI TER changes for 01 Nov 2026
 
-Regular plan: 54 scheme(s) changed
-- Nippon India Taiwan Equity Fund: 1.92% -> 1.94% (+0.02)
-- Aditya Birla Sun Life Focused Fund: 1.54% -> 1.53% (-0.01)
-- Bajaj Finserv Flexi Cap Fund: 1.52% -> 1.51% (-0.01)
-- Canara Robeco Small Cap Fund: 1.46% -> 1.47% (+0.01)
-- Canara Robeco Infrastructure Fund: 1.96% -> 1.97% (+0.01)
-- ADITYA BIRLA SUN LIFE BAL BHAVISHYA YOJNA: 1.88% -> 1.87% (-0.01)
-- Edelweiss Recently Listed IPO Fund: 1.85% -> 1.86% (+0.01)
-- Franklin Asian Equity Fund: 1.95% -> 1.96% (+0.01)
-- Franklin India Aggressive Hybrid Fund: 1.73% -> 1.74% (+0.01)
-- Groww Small Cap Fund: 1.91% -> 1.92% (+0.01)
-- HDFC Pharma and Healthcare Fund: 1.65% -> 1.64% (-0.01)
-- HDFC Infrastructure Fund: 1.75% -> 1.74% (-0.01)
-- HDFC Manufacturing Fund: 1.50% -> 1.51% (+0.01)
-- HSBC Financial Services Fund: 1.96% -> 1.97% (+0.01)
-- Invesco India ELSS Tax Saver Fund: 1.70% -> 1.71% (+0.01)
-... and 39 more (see the CSV in data/output)
+Regular plan: 5 scheme(s) changed
+- JioBlackRock Liquid Fund: 0.20% -> 0.22% (+0.02)
+- Baroda BNP Paribas Ultra Short to Short Term Fund: 0.88% -> 0.87% (-0.01)
+- HSBC Value Fund: 1.46% -> 1.45% (-0.01)
+- quant Equity Savings Fund: 2.01% -> 2.02% (+0.01)
+- Union Multi Asset Allocation Fund: 1.85% -> 1.86% (+0.01)
 
-Direct plan: 64 scheme(s) changed
-- Nippon India Taiwan Equity Fund: 0.80% -> 0.82% (+0.02)
-- Aditya Birla Sun Life Large Cap Fund: 0.82% -> 0.81% (-0.01)
-- Aditya Birla Sun Life Transportation and Logistics Fund: 0.75% -> 0.74% (-0.01)
-- Aditya Birla Sun Life MIDCAP Fund: 0.88% -> 0.87% (-0.01)
-- Canara Robeco Small Cap Fund: 0.48% -> 0.49% (+0.01)
-- Canara Robeco Infrastructure Fund: 0.91% -> 0.92% (+0.01)
-- Canara Robeco Balanced Advantage Fund: 0.76% -> 0.77% (+0.01)
-- Aditya Birla Sun Life Quant Fund: 0.66% -> 0.65% (-0.01)
-- Franklin India Dividend Yield Fund: 1.02% -> 1.03% (+0.01)
-- Franklin India Opportunities Fund: 0.46% -> 0.47% (+0.01)
-- Groww Small Cap Fund: 0.46% -> 0.47% (+0.01)
-- HDFC Pharma and Healthcare Fund: 0.71% -> 0.70% (-0.01)
-- HDFC Infrastructure Fund: 1.00% -> 0.99% (-0.01)
-- HDFC Manufacturing Fund: 0.73% -> 0.74% (+0.01)
-- HSBC Financial Services Fund: 0.73% -> 0.74% (+0.01)
-... and 49 more (see the CSV in data/output)
+Direct plan: 3 scheme(s) changed
+- JioBlackRock Liquid Fund: 0.09% -> 0.11% (+0.02)
+- Baroda BNP Paribas Ultra Short to Short Term Fund: 0.24% -> 0.23% (-0.01)
+- quant Equity Savings Fund: 0.53% -> 0.54% (+0.01)
