@@ -1,13 +1,7 @@
-AMFI TER changes for 01 Nov 2026
+AMFI TER changes for 02 Nov 2026
 
-Regular plan: 5 scheme(s) changed
-- JioBlackRock Liquid Fund: 0.20% -> 0.22% (+0.02)
-- Baroda BNP Paribas Ultra Short to Short Term Fund: 0.88% -> 0.87% (-0.01)
-- HSBC Value Fund: 1.46% -> 1.45% (-0.01)
-- quant Equity Savings Fund: 2.01% -> 2.02% (+0.01)
-- Union Multi Asset Allocation Fund: 1.85% -> 1.86% (+0.01)
+Regular plan: 0 scheme(s) changed
 
-Direct plan: 3 scheme(s) changed
-- JioBlackRock Liquid Fund: 0.09% -> 0.11% (+0.02)
-- Baroda BNP Paribas Ultra Short to Short Term Fund: 0.24% -> 0.23% (-0.01)
-- quant Equity Savings Fund: 0.53% -> 0.54% (+0.01)
+Direct plan: 0 scheme(s) changed
+
+117 new scheme(s) listed, for example: Groww Gilt Fund; Groww Money Market Fund; Groww Arbitrage Fund; Groww Multi Asset Allocation Fund; Groww Multicap Fund
