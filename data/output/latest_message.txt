@@ -1,7 +1,39 @@
-AMFI TER changes for 02 Nov 2026
+AMFI TER changes for 03 Nov 2026
 
-Regular plan: 0 scheme(s) changed
+Regular plan: 28 scheme(s) changed
+- Union Money Market Fund: 0.53% -> 0.24% (-0.29)
+- Sundaram Short Term Fund (Formerly Known as Sundaram Short Duration Fund): 0.69% -> 0.63% (-0.06)
+- Sundaram Medium Term Fund (Formerly Known as Sundaram Medium Duration Fund): 1.63% -> 1.58% (-0.05)
+- Sundaram Conservative Hybrid Fund (Formerly Known as Sundaram Debt Oriented Hybrid Fund): 1.62% -> 1.67% (+0.05)
+- LIC MF Manufacturing Fund: 2.04% -> 2.03% (-0.01)
+- HSBC Business Cycles Fund: 1.89% -> 1.88% (-0.01)
+- PGIM India Flexi cap fund: 1.58% -> 1.57% (-0.01)
+- PGIM India Large Cap Fund: 2.10% -> 2.09% (-0.01)
+- Abakkus Flexi Cap Fund: 1.53% -> 1.52% (-0.01)
+- Groww Multi Asset Allocation Fund: 2.02% -> 2.03% (+0.01)
+- Groww Small Cap Fund: 1.92% -> 1.91% (-0.01)
+- HSBC Financial Services Fund: 1.97% -> 1.96% (-0.01)
+- quant Business Cycle Fund: 1.97% -> 1.96% (-0.01)
+- quant Quantamental Fund: 1.82% -> 1.81% (-0.01)
+- Quant Large & Mid Cap Fund: 1.66% -> 1.65% (-0.01)
+... and 13 more (see the CSV in data/output)
 
-Direct plan: 0 scheme(s) changed
+Direct plan: 33 scheme(s) changed
+- Sundaram ELSS Tax Saver Fund: 1.41% -> 1.34% (-0.07)
+- Sundaram Nifty 100 Equal Weight Fund (Formerly Known as Principal Nifty 100 Equal Weight Fund): 0.49% -> 0.43% (-0.06)
+- Union Small Cap Fund: 0.77% -> 0.72% (-0.05)
+- Union Short Term Fund: 0.28% -> 0.33% (+0.05)
+- Sundaram Long Term Tax Advantage Fund Series IV: 0.82% -> 0.78% (-0.04)
+- Sundaram Infrastructure Advantage Fund (Erstwhile Sundaram Capex Opportunities): 1.51% -> 1.47% (-0.04)
+- Union Retirement Fund: 0.98% -> 0.95% (-0.03)
+- Sundaram Income Plus Arbitrage Active FoF: 0.32% -> 0.29% (-0.03)
+- Sundaram Large Cap Fund ( Formerly Know as Sundaram Blue Chip Fund): 0.63% -> 0.66% (+0.03)
+- Sundaram Multi-Factor Fund: 0.71% -> 0.69% (-0.02)
+- Sundaram Dividend Yield Fund (Formerly Known as Principal Dividend Yield Fund): 1.01% -> 1.03% (+0.02)
+- Union Equity Savings Fund: 1.25% -> 1.27% (+0.02)
+- Union ELSS Tax Saver Fund (Formerly Union Tax Saver (ELSS) Fund: 1.23% -> 1.21% (-0.02)
+- Sundaram Dynamic Asset Allocation Fund (Formerly Known as Sundaram Balanced Advantage Fund): 0.57% -> 0.59% (+0.02)
+- Sundaram Small Cap Fund: 0.73% -> 0.71% (-0.02)
+... and 18 more (see the CSV in data/output)
 
-117 new scheme(s) listed, for example: Groww Gilt Fund; Groww Money Market Fund; Groww Arbitrage Fund; Groww Multi Asset Allocation Fund; Groww Multicap Fund
+945 new scheme(s) listed, for example: 360 ONE OVERNIGHT FUND; 360 ONE Dynamic Term Fund; 360 ONE Liquid Fund; 360 ONE ELSS Tax Saver Nifty 50 Index Fund; 360 ONE FLEXICAP FUND
