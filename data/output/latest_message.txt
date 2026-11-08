@@ -1,39 +1,13 @@
-AMFI TER changes for 07 Nov 2026
+AMFI TER changes for 08 Nov 2026
 
-Regular plan: 129 scheme(s) changed
-- SBI CRISIL - IBX SDL Index - June 2034 Index Fund: 0.34% -> 0.24% (-0.10)
-- Old Bridge Focused Fund: 1.55% -> 1.61% (+0.06)
-- SBI BANKING & PSU DEBT FUND: 0.65% -> 0.70% (+0.05)
-- SBI Nifty200 Quality 30 Index Fund: 0.65% -> 0.62% (-0.03)
-- Navi Multi Asset Omni FoF: 1.18% -> 1.15% (-0.03)
-- SBI Equity Minimum Variance Fund: 0.65% -> 0.62% (-0.03)
-- SBI LIQUID FUND: 0.27% -> 0.25% (-0.02)
-- Mahindra Manulife Multi Asset Allocation Fund: 1.55% -> 1.57% (+0.02)
-- SBI CRISIL-IBX 10:90 Gilt + SDL Index - Dec 2029 Index Fund: 0.32% -> 0.34% (+0.02)
-- SBI CRISIL IBX Gilt Index - June 2036 Fund: 0.42% -> 0.44% (+0.02)
-- SBI Arbitrage Fund: 0.78% -> 0.76% (-0.02)
-- Abakkus Large & Mid Cap Fund: 2.08% -> 2.07% (-0.01)
-- Aditya Birla Sun Life MIDCAP Fund: 1.56% -> 1.55% (-0.01)
-- Aditya Birla Sun Life Transportation and Logistics Fund: 1.79% -> 1.78% (-0.01)
-- Aditya Birla Sun Life ESG Integration Strategy Fund: 2.08% -> 2.07% (-0.01)
-... and 114 more (see the CSV in data/output)
+Regular plan: 4 scheme(s) changed
+- Groww Small Cap Fund: 1.91% -> 1.90% (-0.01)
+- Invesco India Nifty G-sec Jul 2027 Index Fund: 0.25% -> 0.24% (-0.01)
+- Invesco India Nifty G-sec Sep 2032 Index Fund: 0.24% -> 0.25% (+0.01)
+- ITI Flexi Cap Fund: 1.79% -> 1.78% (-0.01)
 
-Direct plan: 127 scheme(s) changed
-- SBI Comma Fund: 0.94% -> 1.19% (+0.25)
-- SBI Balanced Hybrid Fund: 0.55% -> 0.66% (+0.11)
-- SBI Nifty Midcap 150 Momentum 50 ETF FOF: 0.10% -> 0.20% (+0.10)
-- SBI CONTRA FUND: 0.62% -> 0.66% (+0.04)
-- SBI Retirement Benefit Fund - Aggressive Plan: 0.84% -> 0.80% (-0.04)
-- SBI BANKING & FINANCIAL SERVICES FUND: 0.65% -> 0.69% (+0.04)
-- Mahindra Manulife Business Cycle Fund: 0.53% -> 0.56% (+0.03)
-- Navi Multi Asset Omni FoF: 0.23% -> 0.20% (-0.03)
-- SBI Aggressive Hybrid Fund: 0.56% -> 0.59% (+0.03)
-- SBI Focused Fund: 0.58% -> 0.61% (+0.03)
-- SBI CONSERVATIVE HYBRID FUND: 0.80% -> 0.83% (+0.03)
-- SBI ELSS Tax Saver Fund: 0.81% -> 0.84% (+0.03)
-- Mahindra Manulife Multi Asset Allocation Fund: 0.40% -> 0.42% (+0.02)
-- Mahindra Manulife Equity Savings Fund: 0.74% -> 0.76% (+0.02)
-- MahindraManulife Banking & Financial Services Fund: 0.65% -> 0.67% (+0.02)
-... and 112 more (see the CSV in data/output)
-
-2 new scheme(s) listed, for example: Choice Large & Mid Cap Fund; Motilal Oswal Multi Factor Passive Fund of Funds
+Direct plan: 4 scheme(s) changed
+- Groww Small Cap Fund: 0.46% -> 0.45% (-0.01)
+- Invesco India BSE Sensex Index Fund: 0.16% -> 0.15% (-0.01)
+- Invesco India Nifty Bank Index Fund: 0.14% -> 0.15% (+0.01)
+- Sundaram Ultra Short Term Fund (Formerly Known as Sundaram Ultra Short Duration Fund): 0.18% -> 0.19% (+0.01)
