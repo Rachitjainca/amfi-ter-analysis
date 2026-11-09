@@ -1,13 +1,37 @@
-AMFI TER changes for 08 Nov 2026
+AMFI TER changes for 09 Nov 2026
 
-Regular plan: 4 scheme(s) changed
-- Groww Small Cap Fund: 1.91% -> 1.90% (-0.01)
-- Invesco India Nifty G-sec Jul 2027 Index Fund: 0.25% -> 0.24% (-0.01)
-- Invesco India Nifty G-sec Sep 2032 Index Fund: 0.24% -> 0.25% (+0.01)
-- ITI Flexi Cap Fund: 1.79% -> 1.78% (-0.01)
+Regular plan: 39 scheme(s) changed
+- HDFC Housing Opportunities Fund: 1.90% -> 1.88% (-0.02)
+- Axis ESG Integration Strategy Fund: 1.92% -> 1.91% (-0.01)
+- Axis ELSS- Tax Saver Fund: 1.34% -> 1.33% (-0.01)
+- Axis Multi Asset Allocation Fund: 1.58% -> 1.57% (-0.01)
+- Bandhan Innovation Fund: 1.66% -> 1.65% (-0.01)
+- Bandhan ELSS - Tax Saver Fund: 1.55% -> 1.54% (-0.01)
+- Axis Quant Fund: 2.01% -> 2.00% (-0.01)
+- Bandhan Financial Services Fund: 1.90% -> 1.89% (-0.01)
+- Edelweiss Recently Listed IPO Fund: 1.85% -> 1.84% (-0.01)
+- HDFC ELSS - Tax Saver Fund: 1.45% -> 1.44% (-0.01)
+- Edelweiss Small Cap Fund: 1.55% -> 1.54% (-0.01)
+- HDFC Large Cap Fund: 1.30% -> 1.29% (-0.01)
+- HDFC Large & Mid Cap Fund: 1.36% -> 1.35% (-0.01)
+- HDFC Multi Cap Fund: 1.42% -> 1.41% (-0.01)
+- HDFC Flexi Cap Fund: 1.08% -> 1.07% (-0.01)
+... and 24 more (see the CSV in data/output)
 
-Direct plan: 4 scheme(s) changed
-- Groww Small Cap Fund: 0.46% -> 0.45% (-0.01)
-- Invesco India BSE Sensex Index Fund: 0.16% -> 0.15% (-0.01)
-- Invesco India Nifty Bank Index Fund: 0.14% -> 0.15% (+0.01)
-- Sundaram Ultra Short Term Fund (Formerly Known as Sundaram Ultra Short Duration Fund): 0.18% -> 0.19% (+0.01)
+Direct plan: 39 scheme(s) changed
+- HDFC Housing Opportunities Fund: 1.16% -> 1.14% (-0.02)
+- Axis ESG Integration Strategy Fund: 1.19% -> 1.18% (-0.01)
+- Axis ELSS- Tax Saver Fund: 0.73% -> 0.72% (-0.01)
+- Axis Multi Asset Allocation Fund: 0.66% -> 0.65% (-0.01)
+- Bandhan Innovation Fund: 0.48% -> 0.47% (-0.01)
+- Bandhan ELSS - Tax Saver Fund: 0.63% -> 0.62% (-0.01)
+- Axis Quant Fund: 0.82% -> 0.81% (-0.01)
+- Bandhan Financial Services Fund: 0.66% -> 0.65% (-0.01)
+- Bandhan Conservative Hybrid Passive FOF: 0.03% -> 0.04% (+0.01)
+- Edelweiss Silver ETF Fund of Fund: 0.10% -> 0.09% (-0.01)
+- Edelweiss Business Cycle Fund: 0.58% -> 0.57% (-0.01)
+- HDFC Flexi Cap Fund: 0.57% -> 0.56% (-0.01)
+- HDFC Large Cap Fund: 0.83% -> 0.82% (-0.01)
+- HDFC Large & Mid Cap Fund: 0.77% -> 0.76% (-0.01)
+- HDFC ELSS - Tax Saver Fund: 0.97% -> 0.96% (-0.01)
+... and 24 more (see the CSV in data/output)
