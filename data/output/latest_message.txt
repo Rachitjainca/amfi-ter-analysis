@@ -1,11 +1,23 @@
-AMFI TER changes for 15 Nov 2026
+AMFI TER changes for 16 Nov 2026
 
-Regular plan: 4 scheme(s) changed
-- Canara Robeco Banking and Financial Services Fund: 2.04% -> 2.05% (+0.01)
-- HSBC Financial Services Fund: 1.92% -> 1.93% (+0.01)
-- Invesco India Nifty G-sec Jul 2027 Index Fund: 0.24% -> 0.25% (+0.01)
-- Invesco India Nifty 50 Exchange Traded Fund: 0.08% -> 0.09% (+0.01)
+Regular plan: 8 scheme(s) changed
+- Aditya Birla Sun Life Crisil-IBX AAA Financial Services Index-Sep 2027 Fund: 0.37% -> 0.77% (+0.40)
+- ADITYA BIRLA SUN LIFE CRISIL BROAD BASED GILT ETF: 0.07% -> 0.37% (+0.30)
+- Aditya Birla Sun Life Crisil 10 year Gilt ETF: 0.07% -> 0.18% (+0.11)
+- Aditya Birla Sun Life Flexi Cap Fund: 1.34% -> 1.35% (+0.01)
+- Aditya Birla Sun Life PSU Equity Fund: 1.56% -> 1.57% (+0.01)
+- Aditya Birla Sun Life Large Cap Fund: 1.34% -> 1.35% (+0.01)
+- Axis Quant Fund: 2.00% -> 2.01% (+0.01)
+- Bandhan Business Cycle Fund: 1.90% -> 1.91% (+0.01)
 
-Direct plan: 2 scheme(s) changed
-- Canara Robeco Banking and Financial Services Fund: 0.68% -> 0.69% (+0.01)
-- HSBC Financial Services Fund: 0.69% -> 0.70% (+0.01)
+Direct plan: 10 scheme(s) changed
+- Aditya Birla Sun Life Crisil-IBX AAA Financial Services Index-Sep 2027 Fund: 0.12% -> 0.52% (+0.40)
+- Aditya Birla Sun Life CRISIL Liquid Overnight ETF: 0.37% -> 0.52% (+0.15)
+- Aditya Birla Sun Life Balanced Advantage Fund: 0.58% -> 0.59% (+0.01)
+- Aditya Birla Sun Life Flexi Cap Fund: 0.68% -> 0.69% (+0.01)
+- Axis Midcap Fund: 0.49% -> 0.48% (-0.01)
+- Axis Quant Fund: 0.81% -> 0.82% (+0.01)
+- Bandhan Business Cycle Fund: 0.66% -> 0.67% (+0.01)
+- Bandhan Multi-Factor Fund: 0.77% -> 0.78% (+0.01)
+- Bandhan Aggressive Hybrid Passive FOF: 0.04% -> 0.05% (+0.01)
+- Bandhan Multi-Asset Passive FOF: 0.04% -> 0.03% (-0.01)
